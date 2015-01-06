@@ -8,4 +8,4 @@ Features (so far):
 
 ## Demo
 
-See [here](pfirpfel.github.io/image-viewer)!
+See [here](http://pfirpfel.github.io/image-viewer)!
