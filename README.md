@@ -6,3 +6,6 @@ Features (so far):
  * Zooming
  * Moving
 
+## Demo
+
+See [here](pfirpfel.github.io/image-viewer)!
