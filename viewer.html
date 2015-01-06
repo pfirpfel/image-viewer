@@ -11,12 +11,12 @@
     <p>
     Select picture:
     <ul>
-    <li><a href="javascript:setImage('lena.png');">Lena</a></li>
-    <li><a href="javascript:setImage('target.png');">Target</a></li>
+    <li><a href="javascript:setImage('example-assets/lena.png');">Lena</a></li>
+    <li><a href="javascript:setImage('example-assets/target.png');">Target</a></li>
     </ul>
     </p>
     <script>
-      var myImageViewer = new ImageViewer('viewerCanvas', 'target.png');
+      var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png');
       function setImage(newSrc){
         myImageViewer.image.src = newSrc;
       }
