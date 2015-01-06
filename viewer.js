@@ -15,7 +15,7 @@
     this.scale_old = null;
     this.scaleStep = 0.1;
 
-    // image center
+    // image center (scroll offset)
     this.center = {
       x: 0,
       y: 0
@@ -27,6 +27,7 @@
     this.image.addEventListener('load', this._onImageLoad, false);
     this.image.src = imageUrl;
     this.image_old = null;
+    this.visiblePart = null;
 
     // render loop
     this.FPS = 1000/30;
@@ -82,21 +83,23 @@
       , maxPartHeight = this.canvas.height / this.scale
       , actualPartWidthRight = widthToRight >= (maxPartWidth / 2) ? maxPartWidth / 2 : widthToRight
       , actualPartWidthLeft = widthToLeft >= (maxPartWidth / 2) ? maxPartWidth / 2 : widthToLeft
-      , actualPartWidth = actualPartWidthRight + actualPartWidthLeft
       , actualPartHeightTop = heightToTop >= (maxPartHeight / 2) ? maxPartHeight / 2 : heightToTop
-      , actualPartHeightBottom = heightToBottom >= (maxPartHeight / 2) ? maxPartHeight / 2 : heightToBottom
-      , actualPartHeight = actualPartHeightTop + actualPartHeightBottom
-      , partX = this.center.x - actualPartWidthLeft
-      , partY = this.center.y - actualPartHeightTop
-      , canvasX = ((maxPartWidth / 2) - actualPartWidthLeft) * this.scale
+      , actualPartHeightBottom = heightToBottom >= (maxPartHeight / 2) ? maxPartHeight / 2 : heightToBottom;
+    this.visiblePart = {
+      x: this.center.x - actualPartWidthLeft,
+      y: this.center.y - actualPartHeightTop,
+      width: actualPartWidthRight + actualPartWidthLeft,
+      height: actualPartHeightTop + actualPartHeightBottom
+    };
+    var canvasX = ((maxPartWidth / 2) - actualPartWidthLeft) * this.scale
       , canvasY = ((maxPartHeight / 2) - actualPartHeightTop) * this.scale
-      , canvasWidth = actualPartWidth * this.scale
-      , canvasHeight = actualPartHeight * this.scale;
+      , canvasWidth =  this.visiblePart.width * this.scale
+      , canvasHeight = this.visiblePart.height * this.scale;
 
     // draw image
     this.context.drawImage(
       this.image,
-      partX, partY, actualPartWidth, actualPartHeight, // part of image
+      this.visiblePart.x, this.visiblePart.y, this.visiblePart.width, this.visiblePart.height, // part of image
       canvasX, canvasY, canvasWidth, canvasHeight  // position and size within canvas
     );
   };
