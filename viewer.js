@@ -28,7 +28,7 @@
     this.image_old = null;
 
     // render loop
-    this.FPS = 100/30;
+    this.FPS = 1000/30;
     this.tickInterval = null;
 
     this.InputHandler = new InputHandler(this.canvas, this);
