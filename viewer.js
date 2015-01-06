@@ -13,6 +13,7 @@
     // image scale
     this.scale = 1;
     this.scale_old = null;
+    this.scaleStep = 0.1;
 
     // image center
     this.center = {
@@ -120,8 +121,8 @@
   InputHandler.prototype._onMouseWheel = function(evt){
     if (!evt) evt = event;
     var zoomFactor = (evt.detail<0 || evt.wheelDelta>0)
-                    ? 0.9 // up -> smaller
-                    : 1.1; // down -> larger
+                    ? 1 - self.scaleStep  // up -> smaller
+                    : 1 + self.scaleStep; // down -> larger
     self.scale = self.scale * zoomFactor;
   };
 
