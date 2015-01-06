@@ -1,0 +1,2 @@
+lena.png: http://en.wikipedia.org/wiki/File:Lenna.png
+target.png: http://www.publicdomainpictures.net/view-image.php?image=92042&picture=target-checkerboard

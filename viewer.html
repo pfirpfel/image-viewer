@@ -1,15 +1,25 @@
 <!doctype html>
 <html>
-<head>
-<meta charset="UTF-8">
-<title>Image Viewer</title>
-<script src="viewer.js"></script>
-</head>
-<body>
-<!--<h1>Image Viewer</h1>-->
-<canvas id="viewerCanvas" width="500" height="300" style="border: 1px solid black;"></canvas>
-<script>
-var myImageViewer = new ImageViewer('viewerCanvas', 'lena.png');
-</script>
-</body>
+  <head>
+    <meta charset="UTF-8">
+    <title>Image Viewer</title>
+    <script src="viewer.js"></script>
+  </head>
+  <body>
+    <h1>Image Viewer</h1>
+    <canvas id="viewerCanvas" width="500" height="300" style="border: 1px solid black;"></canvas>
+    <p>
+    Select picture:
+    <ul>
+    <li><a href="javascript:setImage('lena.png');">Lena</a></li>
+    <li><a href="javascript:setImage('target.png');">Target</a></li>
+    </ul>
+    </p>
+    <script>
+      var myImageViewer = new ImageViewer('viewerCanvas', 'target.png');
+      function setImage(newSrc){
+        myImageViewer.image.src = newSrc;
+      }
+    </script>
+  </body>
 </html>
