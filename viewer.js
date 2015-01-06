@@ -52,7 +52,8 @@
 
   ImageViewer.prototype._isDirty = function(newScale){
     return !((this.image === this.image_old)
-        && (this.center === this.center_old)
+        && (this.center.x === this.center_old.x)
+        && (this.center.y === this.center_old.y)
         && (this.scale === this.scale_old));
   };
 
@@ -62,7 +63,10 @@
 
     // reset flags
     this.image_old = this.image;
-    this.center_old = this.center;
+    this.center_old = {
+      x: this.center.x,
+      y: this.center.y
+    };
     this.scale_old = this.scale;
 
     // clear canvas
