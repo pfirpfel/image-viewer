@@ -104,8 +104,17 @@
     this.canvas = canvas;
     this.imageViewer = imageViewer;
 
+    this.mouseDownPos = null;
+
+    // zooming
     this.canvas.addEventListener('DOMMouseScroll', this._onMouseWheel);
     this.canvas.addEventListener('mousewheel', this._onMouseWheel);
+
+    // moving
+    this.canvas.addEventListener('mousedown', this._onMouseDown);
+    this.canvas.addEventListener('mousemove', this._onMouseMove);
+    this.canvas.addEventListener('mouseup', this._onMouseUp);
+    this.canvas.addEventListener('mouseout', this._onMouseUp);
   };
 
   InputHandler.prototype._onMouseWheel = function(evt){
@@ -114,6 +123,39 @@
                     ? 0.9 // up -> smaller
                     : 1.1; // down -> larger
     self.scale = self.scale * zoomFactor;
+  };
+
+  InputHandler.prototype._onMouseDown = function(evt){
+    var rect = self.canvas.getBoundingClientRect();
+    self.InputHandler.mouseDownPos  = {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+  };
+
+  InputHandler.prototype._onMouseUp = function(evt){
+    var mouseDownPos = self.InputHandler.mouseDownPos;
+    if(mouseDownPos !== null){
+      self.InputHandler.mouseDownPos = null;
+    }
+  };
+
+  InputHandler.prototype._onMouseMove = function(evt){
+    var mouseDownPos = self.InputHandler.mouseDownPos;
+    if(mouseDownPos !== null){
+      var rect = self.canvas.getBoundingClientRect()
+        , mouseUpPos = {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+          }
+        , deltaX = mouseUpPos.x - mouseDownPos.x
+        , deltaY = mouseUpPos.y - mouseDownPos.y;
+
+      self.center.x -= deltaX / self.scale;
+      self.center.y -= deltaY / self.scale;
+
+      self.InputHandler.mouseDownPos = mouseUpPos;
+    }
   };
 
   window.ImageViewer = ImageViewer;
