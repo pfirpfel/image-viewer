@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Image Viewer</title>
     <script src="viewer.js"></script>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <h1>Image Viewer</h1>
@@ -15,6 +16,8 @@
     <li><a href="javascript:setImage('example-assets/target.png');">Target</a></li>
     </ul>
     </p>
+    <!-- github fork ribbon -->
+    <span id="forkongithub"><a href="https://github.com/pfirpfel/image-viewer">Fork me on GitHub</a></span>
     <script>
       var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png');
       function setImage(newSrc){
