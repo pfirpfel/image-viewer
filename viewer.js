@@ -139,6 +139,7 @@
 
   InputHandler.prototype._onMouseWheel = function(evt){
     if (!evt) evt = event;
+    evt.preventDefault();
     var zoomFactor = (evt.detail<0 || evt.wheelDelta>0)
                     ? 1 - self.scaleStep  // up -> smaller
                     : 1 + self.scaleStep; // down -> larger
