@@ -30,6 +30,14 @@
     this.visiblePart = null;
     this.canvasImage = null;
 
+    // target point
+    this.targetEnabled = true;
+    this.target =
+    this.target_old = {
+      x: 0,
+      y: 0
+    };
+
     // render loop
     this.FPS = 1000/30;
     this.tickInterval = null;
@@ -57,7 +65,8 @@
     // TODO: rethink this
     return !((this.image === this.image_old)
         && (this.scale === this.scale_old)
-        && (this.center.x === this.center_old.x && this.center.y === this.center_old.y));
+        && (this.center.x === this.center_old.x && this.center.y === this.center_old.y)
+        && (this.target == null || (this.target_old == null && this.target.x === this.target_old.x && this.target.y === this.target_old.y)));
   };
 
   ImageViewer.prototype._render = function(){
@@ -70,6 +79,10 @@
       x: this.center.x,
       y: this.center.y
     };
+    this.target_old = (this.target !== null) ? {
+      x: this.target.x,
+      y: this.target.y
+    } : null;
     this.scale_old = this.scale;
 
     // clear canvas
@@ -105,6 +118,62 @@
       this.visiblePart.x, this.visiblePart.y, this.visiblePart.width, this.visiblePart.height, // part of image
       this.canvasImage.x, this.canvasImage.y, this.canvasImage.width, this.canvasImage.height  // position and size within canvas
     );
+
+    if(this.targetEnabled && this.target !== null){
+      this._drawTarget();
+    }
+  };
+
+  ImageViewer.prototype._drawTarget = function(){
+    var centerCorrection = { // based on shape below
+      x: 0,
+      y: -30
+    };
+
+    this.context.save();
+
+    var shapeScale = 1.5
+      , xTranslation = (
+                          this.target.x  // x-pos of target on picture
+                        + centerCorrection.x * shapeScale // scaled x-offset of center of target shape
+                        + this.canvas.width / this.scale / 2 // offset of scaled canvas
+                        - this.center.x // scroll offset of image
+                       ) * this.scale // scale the transformation
+
+      , yTranslation = (
+                          this.target.y  // y-pos of target on picture
+                        + centerCorrection.y * shapeScale // scaled y-offset of center of target shape
+                        + this.canvas.height / this.scale / 2 // offset of scaled canvas
+                        - this.center.y // scroll offset of image
+                       ) * this.scale // scale the transformation
+      ;
+    this.context.translate(xTranslation, yTranslation);
+
+    this.context.scale(shapeScale * this.scale, shapeScale * this.scale);
+    this.context.lineWidth = 2;
+    this.context.strokeStyle = '#ff0000';
+    this.context.fillStyle = '#ff0000';
+
+    // flag
+    this.context.beginPath();
+    this.context.moveTo(0, 10);
+    this.context.lineTo(15, 15);
+    this.context.lineTo(15, 5);
+    this.context.lineTo(0, 0);
+    this.context.lineTo(0, 30);
+    this.context.stroke();
+
+    // bulls-eye
+    // inner circle
+    this.context.beginPath();
+    this.context.arc(0, 30, 5, 0, 2 * Math.PI, false);
+    this.context.stroke();
+    // outer circle
+    this.context.beginPath();
+    this.context.arc(0, 30, 10, 0, 2 * Math.PI, false);
+    this.context.stroke();
+
+    this.context.restore();
   };
 
   function InputHandler(canvas, imageViewer) {
@@ -123,6 +192,9 @@
     // moving
     this.mouseLastPos = null;
     this.canvas.addEventListener('mousemove', this._onMouseMove);
+
+    // set target
+    this.canvas.addEventListener('click', this._targetClick);
   };
 
   InputHandler.prototype._onMouseDown = function(evt){
@@ -134,6 +206,26 @@
   InputHandler.prototype._onMouseUp = function(evt){
     if(evt.button === 0){ // left/main button
       self.InputHandler.leftMouseButtonDown = false;
+    }
+  };
+
+  InputHandler.prototype._targetClick = function(evt){
+    if(evt.shiftKey){
+      var target = self.target || { x: 0, y: 0 }
+        , rect = self.canvas.getBoundingClientRect()
+        , clickPos = {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      target.x =
+            self.visiblePart.x // image offset
+          + clickPos.x / self.scale // de-scaled click position
+          - self.canvasImage.x / self.scale; // de-scaled canvas offset
+      target.y =
+            self.visiblePart.y // image offset
+          + clickPos.y  / self.scale // de-scaled click position
+          - self.canvasImage.y / self.scale; // de-scaled canvas offset
+      self.target = target;
     }
   };
 
