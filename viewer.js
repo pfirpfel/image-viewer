@@ -16,11 +16,11 @@
     this.scaleStep = 0.1;
 
     // image center (scroll offset)
-    this.center = {
+    this.center =
+    this.center_old = {
       x: 0,
       y: 0
-    }
-    this.center_old = null;
+    };
 
     // image
     this.image = new Image();
@@ -28,6 +28,7 @@
     this.image.src = imageUrl;
     this.image_old = null;
     this.visiblePart = null;
+    this.canvasImage = null;
 
     // render loop
     this.FPS = 1000/30;
@@ -53,10 +54,10 @@
   };
 
   ImageViewer.prototype._isDirty = function(newScale){
+    // TODO: rethink this
     return !((this.image === this.image_old)
-        && (this.center.x === this.center_old.x)
-        && (this.center.y === this.center_old.y)
-        && (this.scale === this.scale_old));
+        && (this.scale === this.scale_old)
+        && (this.center.x === this.center_old.x && this.center.y === this.center_old.y));
   };
 
   ImageViewer.prototype._render = function(){
@@ -91,16 +92,18 @@
       width: actualPartWidthRight + actualPartWidthLeft,
       height: actualPartHeightTop + actualPartHeightBottom
     };
-    var canvasX = ((maxPartWidth / 2) - actualPartWidthLeft) * this.scale
-      , canvasY = ((maxPartHeight / 2) - actualPartHeightTop) * this.scale
-      , canvasWidth =  this.visiblePart.width * this.scale
-      , canvasHeight = this.visiblePart.height * this.scale;
+    this.canvasImage = {
+      x: ((maxPartWidth / 2) - actualPartWidthLeft) * this.scale,
+      y: ((maxPartHeight / 2) - actualPartHeightTop) * this.scale,
+      width: this.visiblePart.width * this.scale,
+      height: this.visiblePart.height * this.scale
+    };
 
     // draw image
     this.context.drawImage(
       this.image,
       this.visiblePart.x, this.visiblePart.y, this.visiblePart.width, this.visiblePart.height, // part of image
-      canvasX, canvasY, canvasWidth, canvasHeight  // position and size within canvas
+      this.canvasImage.x, this.canvasImage.y, this.canvasImage.width, this.canvasImage.height  // position and size within canvas
     );
   };
 
@@ -110,8 +113,8 @@
 
     // global
     this.leftMouseButtonDown = false
-    document.addEventListener('mousedown', function(){ self.InputHandler.leftMouseButtonDown = true; });
-    document.addEventListener('mouseup', function(){ self.InputHandler.leftMouseButtonDown = false; });
+    document.addEventListener('mousedown', this._onMouseDown);
+    document.addEventListener('mouseup', this._onMouseUp);
 
     // zooming
     this.canvas.addEventListener('DOMMouseScroll', this._onMouseWheel);
@@ -120,6 +123,18 @@
     // moving
     this.mouseLastPos = null;
     this.canvas.addEventListener('mousemove', this._onMouseMove);
+  };
+
+  InputHandler.prototype._onMouseDown = function(evt){
+    if(evt.button === 0){ // left/main button
+      self.InputHandler.leftMouseButtonDown = true;
+    }
+  };
+
+  InputHandler.prototype._onMouseUp = function(evt){
+    if(evt.button === 0){ // left/main button
+      self.InputHandler.leftMouseButtonDown = false;
+    }
   };
 
   InputHandler.prototype._onMouseWheel = function(evt){
