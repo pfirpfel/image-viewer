@@ -326,20 +326,13 @@
   }
 
   function drawTargetIcon(ctx, centerX, centerY, buttonRadius){
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, buttonRadius * 0.75, 0, 2 * Math.PI);
-    ctx.fill();
-
-    ctx.globalCompositeOperation = 'xor';
+    ctx.lineWidth = buttonRadius * 0.3;
+    ctx.strokeStyle = this.color;
     ctx.beginPath();
     ctx.arc(centerX, centerY, buttonRadius * 0.5, 0, 2 * Math.PI);
-    ctx.fill();
-
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, buttonRadius * 0.25, 0, 2 * Math.PI);
-    ctx.fill();  
+    ctx.stroke();
   }
+
   function InputHandler(canvas, imageViewer) {
     this.canvas = canvas;
     this.imageViewer = imageViewer;
