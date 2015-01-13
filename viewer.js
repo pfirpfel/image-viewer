@@ -72,39 +72,21 @@
     };
     this.scale_old = this.scale;
 
+    var ctx = this.context;
     // clear canvas
-    this.context.clearRect ( 0 , 0 , this.canvas.width, this.canvas.height );
+    ctx.clearRect ( 0 , 0 , this.canvas.width, this.canvas.height );
 
-    // calculate image properties
-    var widthToRight = this.image.width - this.center.x
-      , widthToLeft = this.center.x
-      , heightToTop = this.center.y
-      , heightToBottom = this.image.height - this.center.y
-      , maxPartWidth = this.canvas.width / this.scale
-      , maxPartHeight = this.canvas.height / this.scale
-      , actualPartWidthRight = widthToRight >= (maxPartWidth / 2) ? maxPartWidth / 2 : widthToRight
-      , actualPartWidthLeft = widthToLeft >= (maxPartWidth / 2) ? maxPartWidth / 2 : widthToLeft
-      , actualPartHeightTop = heightToTop >= (maxPartHeight / 2) ? maxPartHeight / 2 : heightToTop
-      , actualPartHeightBottom = heightToBottom >= (maxPartHeight / 2) ? maxPartHeight / 2 : heightToBottom;
-    this.visiblePart = {
-      x: this.center.x - actualPartWidthLeft,
-      y: this.center.y - actualPartHeightTop,
-      width: actualPartWidthRight + actualPartWidthLeft,
-      height: actualPartHeightTop + actualPartHeightBottom
-    };
-    this.canvasImage = {
-      x: ((maxPartWidth / 2) - actualPartWidthLeft) * this.scale,
-      y: ((maxPartHeight / 2) - actualPartHeightTop) * this.scale,
-      width: this.visiblePart.width * this.scale,
-      height: this.visiblePart.height * this.scale
-    };
+    // draw image (transformed and scaled)
+    ctx.save();
+    var translateX = this.canvas.width / 2 - this.center.x * this.scale
+      , translateY = this.canvas.height / 2 - this.center.y * this.scale;
 
-    // draw image
-    this.context.drawImage(
-      this.image,
-      this.visiblePart.x, this.visiblePart.y, this.visiblePart.width, this.visiblePart.height, // part of image
-      this.canvasImage.x, this.canvasImage.y, this.canvasImage.width, this.canvasImage.height  // position and size within canvas
-    );
+    ctx.translate(translateX, translateY);
+    ctx.scale(this.scale, this.scale);
+
+    ctx.drawImage(this.image, 0,0);
+
+    ctx.restore();
   };
 
   function InputHandler(canvas, imageViewer) {
