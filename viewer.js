@@ -33,7 +33,7 @@
 
     this.InputHandler = new InputHandler(this.canvas, this);
   }
-  
+
   ImageViewer.prototype._onImageLoad = function(){
     // set scale to use as much space inside the canvas as possible
     if(((self.canvas.height / self.image.height) * self.image.width) <= self.canvas.width){
@@ -83,7 +83,7 @@
     this.imageViewer = imageViewer;
 
     // global
-    this.leftMouseButtonDown = false
+    this.leftMouseButtonDown = false;
     document.addEventListener('mousedown', this._onMouseDown);
     document.addEventListener('mouseup', this._onMouseUp);
 
@@ -94,7 +94,7 @@
     // moving
     this.mouseLastPos = null;
     this.canvas.addEventListener('mousemove', this._onMouseMove);
-  };
+  }
 
   InputHandler.prototype._onMouseDown = function(evt){
     if(evt.button === 0){ // left/main button
