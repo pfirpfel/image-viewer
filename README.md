@@ -2,8 +2,9 @@
 
 ## Features (so far)
 
- * Zooming
- * Moving
+ * zooming (mouse wheel)
+ * moving (by dragging the picture)
+ * interactive buttons (for zooming)
 
 ## Demo
 
