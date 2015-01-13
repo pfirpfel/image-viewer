@@ -10,23 +10,20 @@
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
 
+    // dirty state
+    this.dirty = true;
+
     // image scale
     this.scale = 1;
-    this.scale_old = null;
     this.scaleStep = 0.1;
 
     // image center (scroll offset)
-    this.center =
-    this.center_old = {
-      x: 0,
-      y: 0
-    };
+    this.center = { x: 0, y: 0 };
 
     // image
     this.image = new Image();
     this.image.addEventListener('load', this._onImageLoad, false);
     this.image.src = imageUrl;
-    this.image_old = null;
     this.visiblePart = null;
     this.canvasImage = null;
 
@@ -53,24 +50,10 @@
     self.tickInterval = setInterval(function(){self._render()}, self.FPS);
   };
 
-  ImageViewer.prototype._isDirty = function(newScale){
-    // TODO: rethink this
-    return !((this.image === this.image_old)
-        && (this.scale === this.scale_old)
-        && (this.center.x === this.center_old.x && this.center.y === this.center_old.y));
-  };
-
   ImageViewer.prototype._render = function(){
     // check if dirty
-    if(!this._isDirty()) return;
-
-    // reset flags
-    this.image_old = this.image;
-    this.center_old = {
-      x: this.center.x,
-      y: this.center.y
-    };
-    this.scale_old = this.scale;
+    if(!this.dirty) return;
+    this.dirty = false;
 
     var ctx = this.context;
     // clear canvas
@@ -126,6 +109,7 @@
                     ? 1 - self.scaleStep  // up -> smaller
                     : 1 + self.scaleStep; // down -> larger
     self.scale = self.scale * zoomFactor;
+    self.dirty = true;
   };
 
   InputHandler.prototype._onMouseMove = function(evt){
@@ -141,6 +125,7 @@
 
       self.center.x -= deltaX / self.scale;
       self.center.y -= deltaY / self.scale;
+      self.dirty = true;
     }
     self.InputHandler.mouseLastPos = mouseUpPos;
   };
