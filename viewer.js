@@ -24,8 +24,6 @@
     this.image = new Image();
     this.image.addEventListener('load', this._onImageLoad, false);
     this.image.src = imageUrl;
-    this.visiblePart = null;
-    this.canvasImage = null;
 
     // render loop
     this.FPS = 1000/30;
