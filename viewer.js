@@ -74,7 +74,95 @@
     ctx.drawImage(this.image, 0,0);
 
     ctx.restore();
+
+    var padding = 10
+      , radius = 20
+      , x = this.canvas.width - radius - padding
+      , y = this.canvas.height - radius - padding;
+
+    drawButton(ctx, x, y - 100, radius, drawPlusIcon, '#000000', 0.2);
+    drawButton(ctx, x, y - 50, radius, drawPlusIcon, '#000000', 1);
+    drawButton(ctx, x, y, radius, drawMinusIcon, '#000000', 0.8);
+
   };
+
+  function drawButton(ctx, x, y, radius, icon, color, alpha){
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = 0;
+    ctx.fillStyle= color;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    icon(ctx, x, y, radius);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawMinusIcon(ctx, centerX, centerY, buttonRadius){
+    var rectLength = buttonRadius
+      , rectThickness = rectLength / 4
+      , x = centerX - rectLength / 2
+      , y = centerY - rectThickness / 2;
+
+    ctx.fillRect(x, y, rectLength, rectThickness);
+  }
+
+  function drawPlusIcon(ctx, centerX, centerY, buttonRadius){
+    /*
+        11---10
+        |     |
+    01--12    09--08
+    |              |
+    02--03    06--07
+        |     |
+        04---05
+    */
+    var rectLength = buttonRadius
+      , rectThickness = rectLength / 4;
+
+    ctx.beginPath();
+    // 1
+    ctx.moveTo(centerX - rectLength / 2,
+               centerY - rectThickness / 2);
+    // 2
+    ctx.lineTo(centerX - rectLength / 2,
+               centerY + rectThickness / 2);
+    // 3
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY + rectThickness / 2);
+    // 4
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY + rectLength / 2);
+    // 5
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY + rectLength / 2);
+    // 6
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY + rectThickness / 2);
+    // 7
+    ctx.lineTo(centerX + rectLength / 2,
+               centerY + rectThickness / 2);
+    // 8
+    ctx.lineTo(centerX + rectLength / 2,
+               centerY - rectThickness / 2);
+    // 9
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY - rectThickness / 2);
+    // 10
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY - rectLength / 2);
+    // 11
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY - rectLength / 2);
+    // 12
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY - rectThickness / 2);
+
+    ctx.closePath();
+    ctx.fill();
+  }
 
   function InputHandler(canvas, imageViewer) {
     this.canvas = canvas;
