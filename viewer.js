@@ -129,8 +129,9 @@
       x: 0,
       y: -30
     };
+    var ctx = this.context;
 
-    this.context.save();
+    ctx.save();
 
     var shapeScale = 1.5
       , xTranslation = (
@@ -147,33 +148,33 @@
                         - this.center.y // scroll offset of image
                        ) * this.scale // scale the transformation
       ;
-    this.context.translate(xTranslation, yTranslation);
+    ctx.translate(xTranslation, yTranslation);
 
-    this.context.scale(shapeScale * this.scale, shapeScale * this.scale);
-    this.context.lineWidth = 2;
-    this.context.strokeStyle = '#ff0000';
-    this.context.fillStyle = '#ff0000';
+    ctx.scale(shapeScale * this.scale, shapeScale * this.scale);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#ff0000';
+    ctx.fillStyle = '#ff0000';
 
     // flag
-    this.context.beginPath();
-    this.context.moveTo(0, 10);
-    this.context.lineTo(15, 15);
-    this.context.lineTo(15, 5);
-    this.context.lineTo(0, 0);
-    this.context.lineTo(0, 30);
-    this.context.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 10);
+    ctx.lineTo(15, 15);
+    ctx.lineTo(15, 5);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(0, 30);
+    ctx.stroke();
 
     // bulls-eye
     // inner circle
-    this.context.beginPath();
-    this.context.arc(0, 30, 5, 0, 2 * Math.PI, false);
-    this.context.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 30, 5, 0, 2 * Math.PI, false);
+    ctx.stroke();
     // outer circle
-    this.context.beginPath();
-    this.context.arc(0, 30, 10, 0, 2 * Math.PI, false);
-    this.context.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 30, 10, 0, 2 * Math.PI, false);
+    ctx.stroke();
 
-    this.context.restore();
+    ctx.restore();
   };
 
   function InputHandler(canvas, imageViewer) {
