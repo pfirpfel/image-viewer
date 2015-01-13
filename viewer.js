@@ -384,25 +384,6 @@
         self.InputHandler.leftMouseButtonDown = true;
       }
     }
-  /*
-    if(evt.button === 0){ // left/main button
-      // check if a button was clicked
-      var rect = self.canvas.getBoundingClientRect()
-        , pos = {
-            x: evt.clientX - rect.left,
-            y: evt.clientY - rect.top
-          };
-      var clickedButtons = self.buttons.filter(function(button){ return button.isWithinBounds(pos.x, pos.y); });
-      // button clicked
-      if(clickedButtons.length > 0 ){
-        clickedButtons[0].onClick();
-      }
-      // no button clicked
-      else {
-        // set flag for image moving
-        self.InputHandler.leftMouseButtonDown = true;
-      }
-    }*/
   };
 
   InputHandler.prototype._onMouseUp = function(evt){
