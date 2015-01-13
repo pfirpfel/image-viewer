@@ -35,9 +35,11 @@
       , y = this.canvas.height - radius - padding;
 
     var plusButton = new Button(x, y - 50, radius, drawPlusIcon);
+    plusButton.onClick = function(){ self.zoomIn(); };
     this.buttons.push(plusButton);
 
     var minusButton = new Button(x, y, radius, drawMinusIcon);
+    minusButton.onClick = function(){ self.zoomOut(); };
     this.buttons.push(minusButton);
 
     // render loop
@@ -96,6 +98,16 @@
     });
   };
 
+  ImageViewer.prototype.zoomIn = function(){
+    this.scale = this.scale * (1 + this.scaleStep);
+    this.dirty = true;
+  };
+
+  ImageViewer.prototype.zoomOut = function(){
+    this.scale = this.scale * (1 - this.scaleStep);
+    this.dirty = true;
+  };
+
   function Button(x, y, radius, icon){
     // centre coordinates
     this.x = x;
@@ -113,6 +125,9 @@
     // icon drawing function
     // (ctx, x, y, radius, icon, color, alpha)
     this.icon = icon;
+
+    // click action
+    this.onClick = function(){ alert('no click action set!'); }
   }
 
   Button.prototype.isWithinBounds = function(x, y){
@@ -229,7 +244,22 @@
 
   InputHandler.prototype._onMouseDown = function(evt){
     if(evt.button === 0){ // left/main button
-      self.InputHandler.leftMouseButtonDown = true;
+      // check if a button was clicked
+      var rect = self.canvas.getBoundingClientRect()
+        , pos = {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+          };
+      var clickedButtons = self.buttons.filter(function(button){ return button.isWithinBounds(pos.x, pos.y); });
+      // button clicked
+      if(clickedButtons.length > 0 ){
+        clickedButtons[0].onClick();
+      }
+      // no button clicked
+      else {
+        // set flag for image moving
+        self.InputHandler.leftMouseButtonDown = true;
+      }
     }
   };
 
@@ -242,11 +272,11 @@
   InputHandler.prototype._onMouseWheel = function(evt){
     if (!evt) evt = event;
     evt.preventDefault();
-    var zoomFactor = (evt.detail<0 || evt.wheelDelta>0)
-                    ? 1 - self.scaleStep  // up -> smaller
-                    : 1 + self.scaleStep; // down -> larger
-    self.scale = self.scale * zoomFactor;
-    self.dirty = true;
+    if(evt.detail<0 || evt.wheelDelta>0){ // up -> smaller
+      self.zoomOut();
+    } else { // down -> larger
+      self.zoomIn();
+    }
   };
 
   InputHandler.prototype._onMouseMove = function(evt){
