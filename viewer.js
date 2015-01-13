@@ -46,8 +46,14 @@
     self.center.x = self.image.width / 2;
     self.center.y = self.image.height / 2;
 
-    // start render loop
-    self.tickInterval = setInterval(function(){self._render()}, self.FPS);
+    // image changed
+    self.dirty = true;
+
+    // stop old render loop (if existed)
+    if(self.tickInterval) clearInterval(self.tickInterval);
+
+    // start new render loop
+    self.tickInterval = setInterval(function(){ self._render(); }, self.FPS);
   };
 
   ImageViewer.prototype._render = function(){
