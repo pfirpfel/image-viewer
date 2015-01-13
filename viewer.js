@@ -57,7 +57,7 @@
 
     var ctx = this.context;
     // clear canvas
-    ctx.clearRect ( 0 , 0 , this.canvas.width, this.canvas.height );
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // draw image (transformed and scaled)
     ctx.save();
@@ -115,19 +115,19 @@
   InputHandler.prototype._onMouseMove = function(evt){
     var lastPos = self.InputHandler.mouseLastPos
       , rect = self.canvas.getBoundingClientRect()
-      , mouseUpPos = {
+      , newPos = {
           x: evt.clientX - rect.left,
           y: evt.clientY - rect.top
         };
     if(lastPos !== null && self.InputHandler.leftMouseButtonDown){
-      var deltaX = mouseUpPos.x - lastPos.x
-        , deltaY = mouseUpPos.y - lastPos.y;
+      var deltaX = newPos.x - lastPos.x
+        , deltaY = newPos.y - lastPos.y;
 
       self.center.x -= deltaX / self.scale;
       self.center.y -= deltaY / self.scale;
       self.dirty = true;
     }
-    self.InputHandler.mouseLastPos = mouseUpPos;
+    self.InputHandler.mouseLastPos = newPos;
   };
 
   window.ImageViewer = ImageViewer;
