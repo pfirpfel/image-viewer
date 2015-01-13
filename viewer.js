@@ -25,6 +25,23 @@
     this.image.addEventListener('load', this._onImageLoad, false);
     this.image.src = imageUrl;
 
+    // buttons
+    this.buttons = [];
+
+    // add buttons
+    var padding = 10
+      , radius = 20
+      , x = this.canvas.width - radius - padding
+      , y = this.canvas.height - radius - padding;
+
+    var plusButton = new Button(x, y - 50, radius, drawPlusIcon);
+    plusButton.onClick = function(){ self.zoomIn(); };
+    this.buttons.push(plusButton);
+
+    var minusButton = new Button(x, y, radius, drawMinusIcon);
+    minusButton.onClick = function(){ self.zoomOut(); };
+    this.buttons.push(minusButton);
+
     // render loop
     this.FPS = 1000/30;
     this.tickInterval = null;
@@ -74,7 +91,138 @@
     ctx.drawImage(this.image, 0,0);
 
     ctx.restore();
+
+    // draw buttons
+    this.buttons.forEach(function(button){
+      button.draw(ctx);
+    });
   };
+
+  ImageViewer.prototype.zoomIn = function(){
+    this.scale = this.scale * (1 + this.scaleStep);
+    this.dirty = true;
+  };
+
+  ImageViewer.prototype.zoomOut = function(){
+    this.scale = this.scale * (1 - this.scaleStep);
+    this.dirty = true;
+  };
+
+  function Button(x, y, radius, icon){
+    // centre coordinates
+    this.x = x;
+    this.y = y;
+
+    // radius
+    this.radius = radius;
+
+    // transparency
+    this.alpha = 0.5;
+
+    // color
+    this.color = '#000000';
+
+    // icon drawing function
+    // (ctx, x, y, radius, icon, color, alpha)
+    this.icon = icon;
+
+    // click action
+    this.onClick = function(){ alert('no click action set!'); }
+  }
+
+  Button.prototype.isWithinBounds = function(x, y){
+    var dx = Math.abs(this.x - x)
+      , dy = Math.abs(this.y - y);
+    return  dx * dx + dy * dy <= this.radius * this.radius;
+  };
+
+  Button.prototype.draw = function(ctx){
+    // preserve context
+    ctx.save();
+
+    // drawing settings
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle= this.color;
+    ctx.lineWidth = 0;
+
+    // draw circle
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // draw icon
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    this.icon(ctx, this.x, this.y, this.radius);
+    ctx.restore();
+
+    // restore context
+    ctx.restore();
+  };
+
+  function drawMinusIcon(ctx, centerX, centerY, buttonRadius){
+    var rectLength = buttonRadius
+      , rectThickness = rectLength / 4
+      , x = centerX - rectLength / 2
+      , y = centerY - rectThickness / 2;
+
+    ctx.fillRect(x, y, rectLength, rectThickness);
+  }
+
+  function drawPlusIcon(ctx, centerX, centerY, buttonRadius){
+    /*
+        11---10
+        |     |
+    01--12    09--08
+    |              |
+    02--03    06--07
+        |     |
+        04---05
+    */
+    var rectLength = buttonRadius
+      , rectThickness = rectLength / 4;
+
+    ctx.beginPath();
+    // 1
+    ctx.moveTo(centerX - rectLength / 2,
+               centerY - rectThickness / 2);
+    // 2
+    ctx.lineTo(centerX - rectLength / 2,
+               centerY + rectThickness / 2);
+    // 3
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY + rectThickness / 2);
+    // 4
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY + rectLength / 2);
+    // 5
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY + rectLength / 2);
+    // 6
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY + rectThickness / 2);
+    // 7
+    ctx.lineTo(centerX + rectLength / 2,
+               centerY + rectThickness / 2);
+    // 8
+    ctx.lineTo(centerX + rectLength / 2,
+               centerY - rectThickness / 2);
+    // 9
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY - rectThickness / 2);
+    // 10
+    ctx.lineTo(centerX + rectThickness / 2,
+               centerY - rectLength / 2);
+    // 11
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY - rectLength / 2);
+    // 12
+    ctx.lineTo(centerX - rectThickness / 2,
+               centerY - rectThickness / 2);
+
+    ctx.closePath();
+    ctx.fill();
+  }
 
   function InputHandler(canvas, imageViewer) {
     this.canvas = canvas;
@@ -96,7 +244,22 @@
 
   InputHandler.prototype._onMouseDown = function(evt){
     if(evt.button === 0){ // left/main button
-      self.InputHandler.leftMouseButtonDown = true;
+      // check if a button was clicked
+      var rect = self.canvas.getBoundingClientRect()
+        , pos = {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+          };
+      var clickedButtons = self.buttons.filter(function(button){ return button.isWithinBounds(pos.x, pos.y); });
+      // button clicked
+      if(clickedButtons.length > 0 ){
+        clickedButtons[0].onClick();
+      }
+      // no button clicked
+      else {
+        // set flag for image moving
+        self.InputHandler.leftMouseButtonDown = true;
+      }
     }
   };
 
@@ -109,11 +272,11 @@
   InputHandler.prototype._onMouseWheel = function(evt){
     if (!evt) evt = event;
     evt.preventDefault();
-    var zoomFactor = (evt.detail<0 || evt.wheelDelta>0)
-                    ? 1 - self.scaleStep  // up -> smaller
-                    : 1 + self.scaleStep; // down -> larger
-    self.scale = self.scale * zoomFactor;
-    self.dirty = true;
+    if(evt.detail<0 || evt.wheelDelta>0){ // up -> smaller
+      self.zoomOut();
+    } else { // down -> larger
+      self.zoomIn();
+    }
   };
 
   InputHandler.prototype._onMouseMove = function(evt){
