@@ -25,6 +25,21 @@
     this.image.addEventListener('load', this._onImageLoad, false);
     this.image.src = imageUrl;
 
+    // buttons
+    this.buttons = [];
+
+    // add buttons
+    var padding = 10
+      , radius = 20
+      , x = this.canvas.width - radius - padding
+      , y = this.canvas.height - radius - padding;
+
+    var plusButton = new Button(x, y - 50, radius, drawPlusIcon);
+    this.buttons.push(plusButton);
+
+    var minusButton = new Button(x, y, radius, drawMinusIcon);
+    this.buttons.push(minusButton);
+
     // render loop
     this.FPS = 1000/30;
     this.tickInterval = null;
@@ -75,30 +90,60 @@
 
     ctx.restore();
 
-    var padding = 10
-      , radius = 20
-      , x = this.canvas.width - radius - padding
-      , y = this.canvas.height - radius - padding;
-
-    drawButton(ctx, x, y - 100, radius, drawPlusIcon, '#000000', 0.2);
-    drawButton(ctx, x, y - 50, radius, drawPlusIcon, '#000000', 1);
-    drawButton(ctx, x, y, radius, drawMinusIcon, '#000000', 0.8);
-
+    // draw buttons
+    this.buttons.forEach(function(button){
+      button.draw(ctx);
+    });
   };
 
-  function drawButton(ctx, x, y, radius, icon, color, alpha){
-    ctx.globalAlpha = alpha;
+  function Button(x, y, radius, icon){
+    // centre coordinates
+    this.x = x;
+    this.y = y;
+
+    // radius
+    this.radius = radius;
+
+    // transparency
+    this.alpha = 0.5;
+
+    // color
+    this.color = '#000000';
+
+    // icon drawing function
+    // (ctx, x, y, radius, icon, color, alpha)
+    this.icon = icon;
+  }
+
+  Button.prototype.isWithinBounds = function(x, y){
+    var dx = Math.abs(this.x - x)
+      , dy = Math.abs(this.y - y);
+    return  dx * dx + dy * dy <= this.radius * this.radius;
+  };
+
+  Button.prototype.draw = function(ctx){
+    // preserve context
+    ctx.save();
+
+    // drawing settings
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle= this.color;
     ctx.lineWidth = 0;
-    ctx.fillStyle= color;
+
+    // draw circle
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fill();
+
+    // draw icon
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
-    icon(ctx, x, y, radius);
+    this.icon(ctx, this.x, this.y, this.radius);
     ctx.restore();
-    ctx.globalAlpha = 1;
-  }
+
+    // restore context
+    ctx.restore();
+  };
 
   function drawMinusIcon(ctx, centerX, centerY, buttonRadius){
     var rectLength = buttonRadius
