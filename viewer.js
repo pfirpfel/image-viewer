@@ -44,17 +44,24 @@
 
     // target point
     this.targetEnabled = false;
-    this.target = {
-      x: 0,
-      y: 0
-    };
-    var targetButton = new Button(x, y - 100, radius, drawTargetIcon);
+    this.target = null;
+
+    // add target button
+    var addTargetButton = new Button(x, y - 150, radius, drawTargetIcon);
     // onclick: toggle targetEnabled
-    targetButton.onClick = function(){
-      targetButton.enabled = self.targetEnabled = !self.targetEnabled;
+    addTargetButton.onClick = function(){
+      addTargetButton.enabled = self.targetEnabled = !self.targetEnabled;
       self.dirty = true;
     };
-    this.buttons.push(targetButton);
+    this.buttons.push(addTargetButton);
+
+    // delete target button
+    var deleteTargetButton = new Button(x, y - 100, radius, drawCrossIcon);
+    deleteTargetButton.onClick = function(){
+      self.target = null;
+      self.dirty = true;
+    };
+    this.buttons.push(deleteTargetButton);
 
     // render loop
     this.FPS = 1000/30;
@@ -112,7 +119,7 @@
     });
 
     // draw target
-    if(this.targetEnabled && this.target !== null){
+    if(this.target !== null){
       this._drawTarget();
     }
   };
@@ -307,6 +314,16 @@
     ctx.beginPath();
     ctx.arc(centerX, centerY, buttonRadius * 0.5, 0, 2 * Math.PI);
     ctx.stroke();
+  }
+
+  function drawCrossIcon(ctx, centerX, centerY, buttonRadius){
+    ctx.save();
+      ctx.translate(centerX, centerY + buttonRadius * 0.7);
+      ctx.save();
+        ctx.rotate(Math.PI / 4);
+        drawPlusIcon(ctx, - buttonRadius / 2, - buttonRadius / 2, buttonRadius);
+      ctx.restore();
+    ctx.restore();
   }
 
   function InputHandler(canvas, imageViewer) {
