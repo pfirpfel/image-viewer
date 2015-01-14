@@ -111,31 +111,7 @@
       button.draw(ctx);
     });
 
-
-    // calculate image properties
-    var widthToRight = this.image.width - this.center.x
-      , widthToLeft = this.center.x
-      , heightToTop = this.center.y
-      , heightToBottom = this.image.height - this.center.y
-      , maxPartWidth = this.canvas.width / this.scale
-      , maxPartHeight = this.canvas.height / this.scale
-      , actualPartWidthRight = widthToRight >= (maxPartWidth / 2) ? maxPartWidth / 2 : widthToRight
-      , actualPartWidthLeft = widthToLeft >= (maxPartWidth / 2) ? maxPartWidth / 2 : widthToLeft
-      , actualPartHeightTop = heightToTop >= (maxPartHeight / 2) ? maxPartHeight / 2 : heightToTop
-      , actualPartHeightBottom = heightToBottom >= (maxPartHeight / 2) ? maxPartHeight / 2 : heightToBottom;
-    this.visiblePart = {
-      x: this.center.x - actualPartWidthLeft,
-      y: this.center.y - actualPartHeightTop,
-      width: actualPartWidthRight + actualPartWidthLeft,
-      height: actualPartHeightTop + actualPartHeightBottom
-    };
-    this.canvasImage = {
-      x: ((maxPartWidth / 2) - actualPartWidthLeft) * this.scale,
-      y: ((maxPartHeight / 2) - actualPartHeightTop) * this.scale,
-      width: this.visiblePart.width * this.scale,
-      height: this.visiblePart.height * this.scale
-    };
-
+    // draw target
     if(this.targetEnabled && this.target !== null){
       this._drawTarget();
     }
@@ -392,15 +368,23 @@
         , clickPos = {
           x: evt.clientX - rect.left,
           y: evt.clientY - rect.top
+        }
+        , visiblePart = {
+          x: self.center.x >= (self.canvas.width / self.scale / 2) ? self.center.x - self.canvas.width / self.scale / 2 : 0,
+          y: self.center.y >= (self.canvas.height / self.scale / 2) ? self.center.y - self.canvas.height / self.scale / 2 : 0
+        }
+        , canvasImage = {
+          x: (self.center.x >= (self.canvas.width / self.scale / 2)) ? 0 : self.canvas.width / 2 - self.center.x * self.scale,
+          y: (self.center.y >= (self.canvas.height / self.scale / 2)) ? 0 : self.canvas.height / 2 - self.center.y * self.scale
         };
       target.x =
-            self.visiblePart.x // image offset
+            visiblePart.x // image offset
           + clickPos.x / self.scale // de-scaled click position
-          - self.canvasImage.x / self.scale; // de-scaled canvas offset
+          - canvasImage.x / self.scale; // de-scaled canvas offset
       target.y =
-            self.visiblePart.y // image offset
+            visiblePart.y // image offset
           + clickPos.y  / self.scale // de-scaled click position
-          - self.canvasImage.y / self.scale; // de-scaled canvas offset
+          - canvasImage.y / self.scale; // de-scaled canvas offset
       self.target = target;
       self.dirty = true;
     }
