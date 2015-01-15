@@ -385,24 +385,8 @@
         , clickPos = {
           x: evt.clientX - rect.left,
           y: evt.clientY - rect.top
-        }
-        , visiblePart = {
-          x: self.center.x >= (self.canvas.width / self.scale / 2) ? self.center.x - self.canvas.width / self.scale / 2 : 0,
-          y: self.center.y >= (self.canvas.height / self.scale / 2) ? self.center.y - self.canvas.height / self.scale / 2 : 0
-        }
-        , canvasImage = {
-          x: (self.center.x >= (self.canvas.width / self.scale / 2)) ? 0 : self.canvas.width / 2 - self.center.x * self.scale,
-          y: (self.center.y >= (self.canvas.height / self.scale / 2)) ? 0 : self.canvas.height / 2 - self.center.y * self.scale
         };
-      target.x =
-            visiblePart.x // image offset
-          + clickPos.x / self.scale // de-scaled click position
-          - canvasImage.x / self.scale; // de-scaled canvas offset
-      target.y =
-            visiblePart.y // image offset
-          + clickPos.y  / self.scale // de-scaled click position
-          - canvasImage.y / self.scale; // de-scaled canvas offset
-      self.target = target;
+      self.target = convertToImagePosition(clickPos);
       self.dirty = true;
     }
   };
@@ -434,6 +418,29 @@
     }
     self.InputHandler.mouseLastPos = newPos;
   };
+
+  function convertToImagePosition(canvasPosition){
+    var visiblePart = {
+          x: self.center.x >= (self.canvas.width / self.scale / 2) ? self.center.x - self.canvas.width / self.scale / 2 : 0,
+          y: self.center.y >= (self.canvas.height / self.scale / 2) ? self.center.y - self.canvas.height / self.scale / 2 : 0
+      }
+      , canvasImage = {
+          x: (self.center.x >= (self.canvas.width / self.scale / 2)) ? 0 : self.canvas.width / 2 - self.center.x * self.scale,
+          y: (self.center.y >= (self.canvas.height / self.scale / 2)) ? 0 : self.canvas.height / 2 - self.center.y * self.scale
+      }
+      , imagePosition = {};
+
+    imagePosition.x =
+            visiblePart.x // image offset
+          + canvasPosition.x / self.scale // de-scaled canvas position
+          - canvasImage.x / self.scale; // de-scaled canvas offset
+    imagePosition.y =
+            visiblePart.y // image offset
+          + canvasPosition.y  / self.scale // de-scaled canvas position
+          - canvasImage.y / self.scale; // de-scaled canvas offset
+
+    return imagePosition;
+  }
 
   window.ImageViewer = ImageViewer;
 }(window));
