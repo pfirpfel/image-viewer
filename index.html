@@ -7,6 +7,7 @@
   </head>
   <body>
     <h1>Image Viewer</h1>
+    <button onclick="javascript:toggleTargetMode();">toggle target mode</button><br>
     <canvas id="viewerCanvas" width="800" height="500" style="border: 1px solid black;"></canvas>
     <p>
     Select picture:
@@ -16,9 +17,23 @@
     </ul>
     </p>
     <script>
-      var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png');
+      // initialize image viewer
+      var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png', { target: false });
+
+      // methods to interact with viewer
+
+      // change the image
       function setImage(newSrc){
         myImageViewer.image.src = newSrc;
+      }
+
+      // enable/disable target mode
+      function toggleTargetMode(){
+        if(myImageViewer.targetFeatureEnabled){
+          myImageViewer.disableTargetMode();
+        } else {
+          myImageViewer.enableTargetMode();
+        }
       }
     </script>
   </body>
