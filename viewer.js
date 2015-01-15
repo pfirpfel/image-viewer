@@ -146,10 +146,6 @@
   };
 
   ImageViewer.prototype._drawTarget = function(){
-    var centerCorrection = { // based on shape below
-      x: 0,
-      y: -30
-    };
     var ctx = this.context;
 
     ctx.save();
@@ -157,14 +153,12 @@
     var shapeScale = 1.5
       , xTranslation = (
                           this.target.x  // x-pos of target on picture
-                        + centerCorrection.x * shapeScale // scaled x-offset of center of target shape
                         + this.canvas.width / this.scale / 2 // offset of scaled canvas
                         - this.center.x // scroll offset of image
                        ) * this.scale // scale the transformation
 
       , yTranslation = (
                           this.target.y  // y-pos of target on picture
-                        + centerCorrection.y * shapeScale // scaled y-offset of center of target shape
                         + this.canvas.height / this.scale / 2 // offset of scaled canvas
                         - this.center.y // scroll offset of image
                        ) * this.scale // scale the transformation
@@ -178,21 +172,21 @@
 
     // flag
     ctx.beginPath();
-    ctx.moveTo(0, 10);
-    ctx.lineTo(15, 15);
-    ctx.lineTo(15, 5);
+    ctx.moveTo(0, -20);
+    ctx.lineTo(15, -15);
+    ctx.lineTo(15, -25);
+    ctx.lineTo(0, -30);
     ctx.lineTo(0, 0);
-    ctx.lineTo(0, 30);
     ctx.stroke();
 
     // bulls-eye
     // inner circle
     ctx.beginPath();
-    ctx.arc(0, 30, 5, 0, 2 * Math.PI, false);
+    ctx.arc(0, 0, 5, 0, 2 * Math.PI, false);
     ctx.stroke();
     // outer circle
     ctx.beginPath();
-    ctx.arc(0, 30, 10, 0, 2 * Math.PI, false);
+    ctx.arc(0, 0, 10, 0, 2 * Math.PI, false);
     ctx.stroke();
 
     ctx.restore();
