@@ -43,17 +43,19 @@
     this.buttons.push(minusButton);
 
     // target point
-    this.targetEnabled = false;
+    this.targetFeatureEnabled = false;
+    this.targetSettingMode = false;
     this.target = null;
+    this.targetButtons = [];
 
     // add target button
     var addTargetButton = new Button(x, y - 150, radius, drawTargetIcon);
-    // onclick: toggle targetEnabled
+    // onclick: toggle targetSettingMode
     addTargetButton.onClick = function(){
-      addTargetButton.enabled = self.targetEnabled = !self.targetEnabled;
+      addTargetButton.enabled = self.targetSettingMode = !self.targetSettingMode;
       self.dirty = true;
     };
-    this.buttons.push(addTargetButton);
+    this.targetButtons.push(addTargetButton);
 
     // delete target button
     var deleteTargetButton = new Button(x, y - 100, radius, drawCrossIcon);
@@ -61,7 +63,7 @@
       self.target = null;
       self.dirty = true;
     };
-    this.buttons.push(deleteTargetButton);
+    this.targetButtons.push(deleteTargetButton);
 
     // render loop
     this.FPS = 1000/30;
@@ -122,6 +124,20 @@
     if(this.target !== null){
       this._drawTarget();
     }
+  };
+
+  ImageViewer.prototype.enableTargetMode = function(){
+    this.buttons = this.buttons.concat(this.targetButtons);
+    this.targetFeatureEnabled = true;
+    this.dirty = true;
+  };
+
+  ImageViewer.prototype.disableTargetMode = function(){
+    this.buttons = this.buttons.filter(function(b){ return self.targetButtons.indexOf(b) < 0; });
+    this.targetFeatureEnabled = false;
+    this.targetSettingMode = false;
+    this.target = null;
+    this.dirty = true;
   };
 
   ImageViewer.prototype._drawTarget = function(){
@@ -379,7 +395,7 @@
   };
 
   InputHandler.prototype._targetClick = function(evt){
-    if(!self.InputHandler._catchButtonClick(evt) && self.targetEnabled){
+    if(!self.InputHandler._catchButtonClick(evt) && self.targetSettingMode){
       var target = self.target || { x: 0, y: 0 }
         , rect = self.canvas.getBoundingClientRect()
         , clickPos = {
