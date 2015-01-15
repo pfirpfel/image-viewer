@@ -127,7 +127,7 @@
     this.icon = icon;
 
     // click action
-    this.onClick = function(){ alert('no click action set!'); }
+    this.onClick = function(){ alert('no click action set!'); };
   }
 
   Button.prototype.isWithinBounds = function(x, y){
