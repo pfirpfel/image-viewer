@@ -6,7 +6,7 @@
   function ImageViewer(canvasId, imageUrl, options){
     self = this;
 
-    var options = (typeof options === 'object') ? options : {};
+    options = (typeof options === 'object') ? options : {};
 
     // canvas
     this.canvas = document.getElementById(canvasId);
