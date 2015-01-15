@@ -310,7 +310,7 @@
 
   function drawTargetIcon(ctx, centerX, centerY, buttonRadius){
     ctx.lineWidth = buttonRadius * 0.3;
-    ctx.strokeStyle = this.color;
+    ctx.strokeStyle = self.color;
     ctx.beginPath();
     ctx.arc(centerX, centerY, buttonRadius * 0.5, 0, 2 * Math.PI);
     ctx.stroke();
@@ -360,7 +360,7 @@
       clickedButtons[0].onClick();
     }
     return (clickedButtons.length > 0 );  
-  }
+  };
 
   InputHandler.prototype._onMouseDown = function(evt){
     // no button clicked
