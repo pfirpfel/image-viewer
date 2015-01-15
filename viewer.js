@@ -151,20 +151,9 @@
     ctx.save();
 
     var shapeScale = 1.5
-      , xTranslation = (
-                          this.target.x  // x-pos of target on picture
-                        + this.canvas.width / this.scale / 2 // offset of scaled canvas
-                        - this.center.x // scroll offset of image
-                       ) * this.scale // scale the transformation
+      , transalation = convertToCanvasTranslation(this.target);
 
-      , yTranslation = (
-                          this.target.y  // y-pos of target on picture
-                        + this.canvas.height / this.scale / 2 // offset of scaled canvas
-                        - this.center.y // scroll offset of image
-                       ) * this.scale // scale the transformation
-      ;
-    ctx.translate(xTranslation, yTranslation);
-
+    ctx.translate(transalation.x, transalation.y);
     ctx.scale(shapeScale * this.scale, shapeScale * this.scale);
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#ff0000';
@@ -455,6 +444,22 @@
           - canvasImage.y / self.scale; // de-scaled canvas offset
 
     return imagePosition;
+  }
+
+  function convertToCanvasTranslation(imagePosition){
+    return {
+      x: (
+            imagePosition.x  // x-position on picture
+          + self.canvas.width / self.scale / 2 // offset of scaled canvas
+          - self.center.x // scroll offset of image
+         ) * self.scale, // scale the transformation
+
+      y: (
+            imagePosition.y  // y-position on picture
+          + self.canvas.height / self.scale / 2 // offset of scaled canvas
+          - self.center.y // scroll offset of image
+         ) * self.scale // scale the transformation
+    };
   }
 
   window.ImageViewer = ImageViewer;
