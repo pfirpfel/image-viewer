@@ -3,8 +3,10 @@
 
   var self;
 
-  function ImageViewer(canvasId, imageUrl){
+  function ImageViewer(canvasId, imageUrl, options){
     self = this;
+
+    var options = (typeof options === 'object') ? options : {};
 
     // canvas
     this.canvas = document.getElementById(canvasId);
@@ -42,8 +44,8 @@
     minusButton.onClick = function(){ self.zoomOut(); };
     this.buttons.push(minusButton);
 
-    // target point
-    this.targetFeatureEnabled = false;
+    // setup target feature
+    this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
     this.targetSettingMode = false;
     this.target = null;
     this.targetButtons = [];
@@ -64,6 +66,9 @@
       self.dirty = true;
     };
     this.targetButtons.push(deleteTargetButton);
+
+    // if target feature was enabled in the options, start it
+    if(this.targetFeatureEnabled) this.enableTargetMode();
 
     // render loop
     this.FPS = 1000/30;
