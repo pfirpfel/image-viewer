@@ -127,7 +127,7 @@
 
     // draw target
     if(this.target !== null){
-      this._drawTarget();
+      this._drawTarget(this.context);
     }
   };
 
@@ -145,9 +145,8 @@
     this.dirty = true;
   };
 
-  ImageViewer.prototype._drawTarget = function(){
-    var ctx = this.context;
-
+  ImageViewer.prototype._drawTarget = function(ctx){
+    // preserve context
     ctx.save();
 
     var shapeScale = 1.5
@@ -178,6 +177,7 @@
     ctx.arc(0, 0, 10, 0, 2 * Math.PI, false);
     ctx.stroke();
 
+    // restore context
     ctx.restore();
   };
 
