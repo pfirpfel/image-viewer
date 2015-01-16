@@ -474,6 +474,27 @@
     });
   };
 
+  Polygon.prototype.isWithinBounds = function(x, y){
+    // get all vertices
+    var vertices = this.getVertices();
+    // if polygon is not closed, the coordinates can't be within bounds
+    if(vertices[vertices.length - 1].next !== vertices[0]) return false;
+
+    // algorithm from: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+    var i = 0
+      , j = vertices.length - 1
+      , inBounds = false;
+    for(; i < vertices.length; j = i++){
+      if(((vertices[i].position.y > y) !== (vertices[j].position.y > y)) &&
+         (x < (vertices[j].position.x - vertices[i].position.x) * (y - vertices[i].position.y)
+            / (vertices[j].position.y - vertices[i].position.y) + vertices[i].position.x)
+      ){
+         inBounds = !inBounds;
+      }
+    }
+    return inBounds;
+  };
+
   function InputHandler(canvas, imageViewer) {
     this.canvas = canvas;
     this.imageViewer = imageViewer;
