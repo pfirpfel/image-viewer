@@ -7,7 +7,9 @@
   </head>
   <body>
     <h1>Image Viewer</h1>
-    <button onclick="javascript:toggleTargetMode();">toggle target mode</button><br>
+    <button onclick="javascript:toggleTargetMode();">toggle target mode</button>
+    <button onclick="javascript:drawSolution();">draw solution</button>
+    <button onclick="javascript:deleteSolution();">delete solution</button><br>
     <canvas id="viewerCanvas" width="800" height="500" style="border: 1px solid black;"></canvas>
     <p>
     Select picture:
@@ -34,6 +36,15 @@
         } else {
           myImageViewer.enableTargetMode();
         }
+      }
+
+      function drawSolution(){
+        myImageViewer.state = myImageViewer.states.DRAW_SOLUTION;
+      }
+
+      function deleteSolution(){
+        myImageViewer.solutionPolygon = null;
+        myImageViewer.dirty = true;
       }
     </script>
   </body>

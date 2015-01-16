@@ -27,6 +27,13 @@
     this.image.addEventListener('load', this._onImageLoad, false);
     this.image.src = imageUrl;
 
+    this.states = {
+      DEFAULT: 0,
+      DRAW_TARGET: 1,
+      DRAW_SOLUTION: 2
+    };
+    this.state = this.states.DEFAULT;
+
     // buttons
     this.buttons = [];
 
@@ -46,15 +53,17 @@
 
     // setup target feature
     this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
-    this.targetSettingMode = false;
     this.target = null;
     this.targetButtons = [];
 
     // add target button
     var addTargetButton = new Button(x, y - 150, radius, drawTargetIcon);
+    addTargetButton.enabled = function(){
+      return (self.state === self.states.DRAW_TARGET);
+    }
     // onclick: toggle targetSettingMode
     addTargetButton.onClick = function(){
-      addTargetButton.enabled = self.targetSettingMode = !self.targetSettingMode;
+      self.state = (self.state === self.states.DRAW_TARGET) ? self.states.DEFAULT : self.states.DRAW_TARGET;
       self.dirty = true;
     };
     this.targetButtons.push(addTargetButton);
@@ -71,13 +80,6 @@
     if(this.targetFeatureEnabled) this.enableTargetMode();
 
     this.solutionPolygon = null;
-    var polygon = new Polygon()
-      , startVertex = new Vertex(100, 100);
-    polygon.addVertex(startVertex);
-    polygon.addVertex(new Vertex(40, 220));
-    polygon.addVertex(new Vertex(250, 320));
-    polygon.addVertex(startVertex);
-    this.solutionPolygon = polygon;
 
     // render loop
     this.FPS = 1000/30;
@@ -154,7 +156,7 @@
   ImageViewer.prototype.disableTargetMode = function(){
     this.buttons = this.buttons.filter(function(b){ return self.targetButtons.indexOf(b) < 0; });
     this.targetFeatureEnabled = false;
-    this.targetSettingMode = false;
+    self.state = self.states.DEFAULT;
     this.target = null;
     this.dirty = true;
   };
@@ -206,7 +208,8 @@
   };
 
   ImageViewer.prototype.getUIElements = function(){
-    return this.buttons.concat(this.solutionPolygon.getVertices());
+    var solutionVertices = (this.solutionPolygon !== null) ? this.solutionPolygon.getVertices() : [];
+    return this.buttons.concat(solutionVertices);
   };
 
   function Button(x, y, radius, icon){
@@ -249,7 +252,8 @@
     ctx.save();
 
     // drawing settings
-    ctx.globalAlpha = (this.enabled) ? this.enabledAlpha : this.alpha;
+    var isEnabled = (typeof this.enabled === 'function') ? this.enabled() : this.enabled;
+    ctx.globalAlpha = (isEnabled) ? this.enabledAlpha : this.alpha;
     ctx.fillStyle= this.color;
     ctx.lineWidth = 0;
 
@@ -410,7 +414,7 @@
   Polygon.prototype.addVertex = function(vertex){
     if(this.initialVertex !== null){
       var last = this.initialVertex;
-      while(last.next !== null){
+      while(last.next !== null && last.next !== this.initialVertex){
         last = last.next;
       }
       last.next = vertex;
@@ -488,7 +492,7 @@
     this.canvas.addEventListener('mousemove', this._onMouseMove);
 
     // set target
-    this.canvas.addEventListener('click', this._targetClick);
+    this.canvas.addEventListener('click', this._onMouseClick);
   }
   
   InputHandler.prototype._getUIElement = function(evt){
@@ -525,20 +529,35 @@
     }
   };
 
-  InputHandler.prototype._targetClick = function(evt){
+  InputHandler.prototype._onMouseClick = function(evt){
     if(evt.button === 0){ // left/main button
       var activeElement = self.InputHandler._getUIElement(evt);
       if(activeElement !== null){
         activeElement.onClick(evt);
       } else {
-        if(self.targetSettingMode){
-          var target = self.target || { x: 0, y: 0 }
-            , rect = self.canvas.getBoundingClientRect()
-            , clickPos = {
-              x: evt.clientX - rect.left,
-              y: evt.clientY - rect.top
-            };
+        var rect = self.canvas.getBoundingClientRect()
+          , clickPos = {
+            x: evt.clientX - rect.left,
+            y: evt.clientY - rect.top
+          };
+        if(self.state === self.states.DRAW_TARGET){
+          var target = self.target || { x: 0, y: 0 };
           self.target = convertToImagePosition(clickPos);
+          self.dirty = true;
+        }
+        if(self.state === self.states.DRAW_SOLUTION){
+          if(evt.shiftKey){
+            if(self.solutionPolygon !== null && self.solutionPolygon.getVertices().length > 2){
+              // close polygon
+              self.solutionPolygon.addVertex(self.solutionPolygon.initialVertex);
+              self.state = self.states.DEFAULT;
+            }
+          } else {
+            var newVertexPosition = convertToImagePosition(clickPos)
+              , newVertex = new Vertex(newVertexPosition.x, newVertexPosition.y);
+            if(self.solutionPolygon === null) self.solutionPolygon = new Polygon();
+            self.solutionPolygon.addVertex(newVertex);
+          }
           self.dirty = true;
         }
       }
