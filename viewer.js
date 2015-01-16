@@ -82,7 +82,7 @@
     this.solutionPolygon = null;
 
     // render loop
-    this.FPS = 1000/30;
+    this.FPS = 30;
     this.tickInterval = null;
 
     this.InputHandler = new InputHandler(this.canvas, this);
@@ -108,7 +108,7 @@
     if(self.tickInterval) clearInterval(self.tickInterval);
 
     // start new render loop
-    self.tickInterval = setInterval(function(){ self._render(); }, self.FPS);
+    self.tickInterval = setInterval(function(){ self._render(); }, 1000 / self.FPS);
   };
 
   ImageViewer.prototype._render = function(){
