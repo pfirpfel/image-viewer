@@ -137,13 +137,13 @@
       button.draw(ctx);
     });
 
+    if(this.solutionPolygon !== null){
+      this.solutionPolygon.draw(this.context);
+    }
+
     // draw target
     if(this.target !== null){
       this._drawTarget(this.context);
-    }
-
-    if(this.solutionPolygon !== null){
-      this.solutionPolygon.draw(this.context);
     }
   };
 
@@ -458,7 +458,7 @@
         current = next;
       } while(current.next !== null && !(current === this.initialVertex));
 
-      ctx.fillStyle = '#FF0000';
+      ctx.fillStyle = '#00ff00';
       if(current === this.initialVertex){
         ctx.closePath();
         ctx.fill();
