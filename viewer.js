@@ -70,6 +70,14 @@
     // if target feature was enabled in the options, start it
     if(this.targetFeatureEnabled) this.enableTargetMode();
 
+    this.solutionPolygon = null;
+    var polygon = new Polygon();
+    polygon.addVertex(new Vertex(100, 100));
+    polygon.addVertex(new Vertex(40, 220));
+    polygon.addVertex(new Vertex(250, 320));
+    polygon.addVertex(new Vertex(100, 100));
+    this.solutionPolygon = polygon;
+
     // render loop
     this.FPS = 1000/30;
     this.tickInterval = null;
@@ -128,6 +136,10 @@
     // draw target
     if(this.target !== null){
       this._drawTarget(this.context);
+    }
+
+    if(this.solutionPolygon !== null){
+      this.solutionPolygon.draw(this.context);
     }
   };
 
@@ -329,6 +341,103 @@
       ctx.restore();
     ctx.restore();
   }
+
+  function Vertex(x, y) {
+    this.position = {
+      x: x,
+      y: y
+    };
+
+    this.next = null;
+
+    this.handleWidth = 12;
+  }
+
+  Vertex.prototype.equals = function(other){
+    return this.position.x === other.position.x
+        && this.position.y === other.position.y;
+  }
+
+  Vertex.prototype.drawHandle = function(ctx){
+    // preserve context
+    ctx.save();
+
+    var translation = convertToCanvasTranslation(this.position);
+    ctx.translate(translation.x, translation.y);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#000000';
+
+    ctx.beginPath();
+    ctx.rect(-this.handleWidth/2, // x
+             -this.handleWidth/2, // y
+             this.handleWidth, // width
+             this.handleWidth); // height
+    ctx.stroke();
+    ctx.fill();
+
+    // restore context
+    ctx.restore();
+  };
+
+  function Polygon(vertices){
+    vertices = vertices || []
+    this._vertices = [].concat(vertices);
+  }
+
+  Polygon.prototype.addVertex = function(vertex){
+    if(this._vertices.length > 0){
+      this._vertices[this._vertices.length - 1].next = vertex;
+    }
+    this._vertices.push(vertex);
+    self.dirty = true;
+  };
+
+  Polygon.prototype.draw = function(ctx){
+    // only draw lines or polygon if there is more than one vertex
+    if(this._vertices.length > 1){
+      var drawPos =  { x: 0, y: 0}
+        , current = this._vertices[0]
+        , next
+        , end = (this._vertices[0].equals(this._vertices[this._vertices.length -1])) ?
+                this._vertices[0] // closed path
+              : this._vertices[this._vertices.length -1]
+        , translation = convertToCanvasTranslation(this._vertices[0].position)
+        ;
+      ctx.save();
+      ctx.translate(translation.x, translation.y);
+      ctx.scale(self.scale,self.scale);
+      ctx.beginPath();
+      ctx.moveTo(drawPos.x, drawPos.y);
+      do {
+        next = current.next;
+        drawPos = {
+          x: drawPos.x + (next.position.x - current.position.x),
+          y: drawPos.y + (next.position.y - current.position.y)
+        };
+        ctx.lineTo(drawPos.x, drawPos.y);
+        current = next;
+      } while(current.next !== null && !current.equals(this._vertices[0]));
+
+      ctx.fillStyle = '#FF0000';
+      if(this._vertices[0].equals(this._vertices[this._vertices.length -1])){
+        ctx.fill();
+      }
+
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // draw handles
+    var uniqueHandles = this._vertices.filter(
+      function(value, index, self){
+        return self.indexOf(value) === index;
+      }
+    );
+    uniqueHandles.forEach(function(handle){
+      handle.drawHandle(ctx);
+    });
+  };
 
   function InputHandler(canvas, imageViewer) {
     this.canvas = canvas;
