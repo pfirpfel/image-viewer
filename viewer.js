@@ -60,7 +60,7 @@
     var addTargetButton = new Button(x, y - 150, radius, drawTargetIcon);
     addTargetButton.enabled = function(){
       return (self.state === self.states.DRAW_TARGET);
-    }
+    };
     // onclick: toggle draw target mode
     addTargetButton.onClick = function(){
       self.state = (self.state === self.states.DRAW_TARGET) ? self.states.DEFAULT : self.states.DRAW_TARGET;
@@ -437,7 +437,7 @@
 
   Polygon.prototype.draw = function(ctx){
     // only draw lines or polygon if there is more than one vertex
-    if(this.initialVertex.next != null){
+    if(this.initialVertex.next !== null){
       var drawPos =  { x: 0, y: 0}
         , current = this.initialVertex
         , next
@@ -456,7 +456,7 @@
         };
         ctx.lineTo(drawPos.x, drawPos.y);
         current = next;
-      } while(current.next !== null && !(current === this.initialVertex));
+      } while(current.next !== null && current !== this.initialVertex);
 
       ctx.fillStyle = '#00ff00';
       if(current === this.initialVertex){
