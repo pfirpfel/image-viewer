@@ -171,8 +171,14 @@
     ctx.translate(transalation.x, transalation.y);
     ctx.scale(shapeScale * this.scale, shapeScale * this.scale);
     ctx.lineWidth = 2;
-    ctx.strokeStyle = '#ff0000';
-    ctx.fillStyle = '#ff0000';
+    var color = '#ff0000'; // red
+
+    // TODO make this behaviour optional
+    // change color if target is within solution
+    if(this.solutionPolygon !== null && this.solutionPolygon.isWithinBounds(this.target.x, this.target.y))
+      color = '#00ff00'; //green
+
+    ctx.strokeStyle = ctx.fillStyle = color;
 
     // flag
     ctx.beginPath();
@@ -444,6 +450,7 @@
         , translation = convertToCanvasTranslation(this.initialVertex.position)
         ;
       ctx.save();
+      ctx.globalAlpha = 0.7;
       ctx.translate(translation.x, translation.y);
       ctx.scale(self.scale,self.scale);
       ctx.beginPath();
@@ -458,7 +465,7 @@
         current = next;
       } while(current.next !== null && current !== this.initialVertex);
 
-      ctx.fillStyle = '#00ff00';
+      ctx.fillStyle = '#0000FF';
       if(current === this.initialVertex){
         ctx.closePath();
         ctx.fill();
