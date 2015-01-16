@@ -61,7 +61,7 @@
     addTargetButton.enabled = function(){
       return (self.state === self.states.DRAW_TARGET);
     }
-    // onclick: toggle targetSettingMode
+    // onclick: toggle draw target mode
     addTargetButton.onClick = function(){
       self.state = (self.state === self.states.DRAW_TARGET) ? self.states.DEFAULT : self.states.DRAW_TARGET;
       self.dirty = true;
