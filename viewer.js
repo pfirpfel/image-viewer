@@ -71,11 +71,12 @@
     if(this.targetFeatureEnabled) this.enableTargetMode();
 
     this.solutionPolygon = null;
-    var polygon = new Polygon();
-    polygon.addVertex(new Vertex(100, 100));
+    var polygon = new Polygon()
+      , startVertex = new Vertex(100, 100);
+    polygon.addVertex(startVertex);
     polygon.addVertex(new Vertex(40, 220));
     polygon.addVertex(new Vertex(250, 320));
-    polygon.addVertex(new Vertex(100, 100));
+    polygon.addVertex(startVertex);
     this.solutionPolygon = polygon;
 
     // render loop
@@ -83,6 +84,7 @@
     this.tickInterval = null;
 
     this.InputHandler = new InputHandler(this.canvas, this);
+    this.activeMoveElement = this.center;
   }
 
   ImageViewer.prototype._onImageLoad = function(){
@@ -203,6 +205,10 @@
     this.dirty = true;
   };
 
+  ImageViewer.prototype.getUIElements = function(){
+    return this.buttons.concat(this.solutionPolygon.getVertices());
+  };
+
   function Button(x, y, radius, icon){
     // centre coordinates
     this.x = x;
@@ -227,6 +233,9 @@
 
     // click action
     this.onClick = function(){ alert('no click action set!'); };
+
+    // mouse down action
+    this.onMouseDown = function(){};
   }
 
   Button.prototype.isWithinBounds = function(x, y){
@@ -343,7 +352,7 @@
   }
 
   function Vertex(x, y) {
-    this.position = {
+    var pos = this.position = {
       x: x,
       y: y
     };
@@ -351,12 +360,26 @@
     this.next = null;
 
     this.handleWidth = 12;
+
+    this.onClick = function(){ };
+
+    this.onMouseDown = function(){
+      self.activeMoveElement = pos;
+      self.InputHandler.leftMouseButtonDown = true;
+    };
   }
 
   Vertex.prototype.equals = function(other){
     return this.position.x === other.position.x
         && this.position.y === other.position.y;
-  }
+  };
+
+  Vertex.prototype.isWithinBounds = function(x, y){
+    var canvasPosition = convertToCanvasTranslation(this.position);
+
+    return x >= canvasPosition.x - this.handleWidth / 2 && x <= canvasPosition.x + this.handleWidth / 2
+        && y >= canvasPosition.y - this.handleWidth / 2 && y <= canvasPosition.y + this.handleWidth / 2;
+  };
 
   Vertex.prototype.drawHandle = function(ctx){
     // preserve context
@@ -380,29 +403,41 @@
     ctx.restore();
   };
 
-  function Polygon(vertices){
-    vertices = vertices || []
-    this._vertices = [].concat(vertices);
+  function Polygon(initialVertex){
+    this.initialVertex = initialVertex || null;
   }
 
   Polygon.prototype.addVertex = function(vertex){
-    if(this._vertices.length > 0){
-      this._vertices[this._vertices.length - 1].next = vertex;
+    if(this.initialVertex !== null){
+      var last = this.initialVertex;
+      while(last.next !== null){
+        last = last.next;
+      }
+      last.next = vertex;
+    } else {
+      this.initialVertex = vertex;
     }
-    this._vertices.push(vertex);
     self.dirty = true;
+  };
+
+  Polygon.prototype.getVertices = function(){
+    var vertices = [], currentVertex = this.initialVertex;
+    while(currentVertex !== null){
+      if(vertices.indexOf(currentVertex) === -1){
+        vertices.push(currentVertex);
+      }
+      currentVertex = (currentVertex.next !== this.initialVertex) ? currentVertex.next : null;
+    }
+    return vertices;
   };
 
   Polygon.prototype.draw = function(ctx){
     // only draw lines or polygon if there is more than one vertex
-    if(this._vertices.length > 1){
+    if(this.initialVertex.next != null){
       var drawPos =  { x: 0, y: 0}
-        , current = this._vertices[0]
+        , current = this.initialVertex
         , next
-        , end = (this._vertices[0].equals(this._vertices[this._vertices.length -1])) ?
-                this._vertices[0] // closed path
-              : this._vertices[this._vertices.length -1]
-        , translation = convertToCanvasTranslation(this._vertices[0].position)
+        , translation = convertToCanvasTranslation(this.initialVertex.position)
         ;
       ctx.save();
       ctx.translate(translation.x, translation.y);
@@ -417,10 +452,11 @@
         };
         ctx.lineTo(drawPos.x, drawPos.y);
         current = next;
-      } while(current.next !== null && !current.equals(this._vertices[0]));
+      } while(current.next !== null && !(current === this.initialVertex));
 
       ctx.fillStyle = '#FF0000';
-      if(this._vertices[0].equals(this._vertices[this._vertices.length -1])){
+      if(current === this.initialVertex){
+        ctx.closePath();
         ctx.fill();
       }
 
@@ -429,12 +465,7 @@
     }
 
     // draw handles
-    var uniqueHandles = this._vertices.filter(
-      function(value, index, self){
-        return self.indexOf(value) === index;
-      }
-    );
-    uniqueHandles.forEach(function(handle){
+    this.getVertices().forEach(function(handle){
       handle.drawHandle(ctx);
     });
   };
@@ -460,25 +491,27 @@
     this.canvas.addEventListener('click', this._targetClick);
   }
   
-  InputHandler.prototype._catchButtonClick = function(evt, executeButton){
-    var _executeButton = (executeButton === false) ? false : true;
-    // check if a button was clicked
+  InputHandler.prototype._getUIElement = function(evt){
     var rect = self.canvas.getBoundingClientRect()
       , pos = {
           x: evt.clientX - rect.left,
           y: evt.clientY - rect.top
         };
-    var clickedButtons = self.buttons.filter(function(button){ return button.isWithinBounds(pos.x, pos.y); });
-    if(_executeButton && clickedButtons.length > 0 ){ // button clicked
-      clickedButtons[0].onClick();
-    }
-    return (clickedButtons.length > 0 );  
+    var activeUIElement =
+            self.getUIElements()
+                .filter(function(button){
+                  return button.isWithinBounds(pos.x, pos.y);
+                });
+
+    return (activeUIElement.length > 0 ) ? activeUIElement[0] : null;
   };
 
   InputHandler.prototype._onMouseDown = function(evt){
-    // no button clicked
-    if(!self.InputHandler._catchButtonClick(evt, false)){
-      if(evt.button === 0){ // left/main button
+    if(evt.button === 0){ // left/main button
+      var activeElement = self.InputHandler._getUIElement(evt);
+      if(activeElement !== null){
+        activeElement.onMouseDown(evt);
+      } else {
         // set flag for image moving
         self.InputHandler.leftMouseButtonDown = true;
       }
@@ -487,20 +520,28 @@
 
   InputHandler.prototype._onMouseUp = function(evt){
     if(evt.button === 0){ // left/main button
+      self.activeMoveElement = self.center;
       self.InputHandler.leftMouseButtonDown = false;
     }
   };
 
   InputHandler.prototype._targetClick = function(evt){
-    if(!self.InputHandler._catchButtonClick(evt) && self.targetSettingMode){
-      var target = self.target || { x: 0, y: 0 }
-        , rect = self.canvas.getBoundingClientRect()
-        , clickPos = {
-          x: evt.clientX - rect.left,
-          y: evt.clientY - rect.top
-        };
-      self.target = convertToImagePosition(clickPos);
-      self.dirty = true;
+    if(evt.button === 0){ // left/main button
+      var activeElement = self.InputHandler._getUIElement(evt);
+      if(activeElement !== null){
+        activeElement.onClick(evt);
+      } else {
+        if(self.targetSettingMode){
+          var target = self.target || { x: 0, y: 0 }
+            , rect = self.canvas.getBoundingClientRect()
+            , clickPos = {
+              x: evt.clientX - rect.left,
+              y: evt.clientY - rect.top
+            };
+          self.target = convertToImagePosition(clickPos);
+          self.dirty = true;
+        }
+      }
     }
   };
 
@@ -525,8 +566,13 @@
       var deltaX = newPos.x - lastPos.x
         , deltaY = newPos.y - lastPos.y;
 
-      self.center.x -= deltaX / self.scale;
-      self.center.y -= deltaY / self.scale;
+      if(self.activeMoveElement === self.center){
+        self.activeMoveElement.x -= deltaX / self.scale;
+        self.activeMoveElement.y -= deltaY / self.scale;
+      } else {
+        self.activeMoveElement.x += deltaX / self.scale;
+        self.activeMoveElement.y += deltaY / self.scale;
+      }
       self.dirty = true;
     }
     self.InputHandler.mouseLastPos = newPos;
