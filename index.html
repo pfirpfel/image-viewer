@@ -17,8 +17,7 @@
   <body>
     <h1>Image Viewer</h1>
     <button onclick="javascript:toggleTargetMode();">toggle target mode</button>
-    <button onclick="javascript:drawSolution();">draw solution</button>
-    <button onclick="javascript:deleteSolution();">delete solution</button><br>
+    <button onclick="javascript:toggleSolution();">toggle solution</button><br>
     <canvas id="viewerCanvas" width="800" height="500" style="border: 1px solid black;"></canvas>
     <p>
     Select picture:
@@ -29,7 +28,7 @@
     </p>
     <script>
       // initialize image viewer
-      var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png', { target: false, showSolution: true });
+      var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png', { target: false, exposeSolution: true });
 
       // methods to interact with viewer
 
@@ -47,8 +46,14 @@
         }
       }
 
-      function drawSolution(){
-        myImageViewer.state = myImageViewer.states.DRAW_SOLUTION;
+      function toggleSolution(){
+        if(myImageViewer.showSolutionMenu){
+          if(myImageViewer.getSolutionVisible()){
+            myImageViewer.hideSolutionMenu();
+          } else{
+            myImageViewer.showSolutionMenu();
+          }
+        }
       }
 
       function deleteSolution(){

@@ -4,7 +4,7 @@
   var self;
 
   // hiddenFlags
-  var showSolution = false;
+  var solutionVisible = false;
 
   function ImageViewer(canvasId, imageUrl, options){
     self = this;
@@ -32,8 +32,10 @@
 
     this.states = {
       DEFAULT: 0,
-      DRAW_TARGET: 1,
-      DRAW_SOLUTION: 2
+      TARGET_DRAW: 1,
+      SOLUTION_DRAW: 2,
+      SOLUTION_MOVE: 3,
+      SOLUTION_POINT_DELETE: 4
     };
     this.state = this.states.DEFAULT;
 
@@ -77,18 +79,78 @@
     // add target button
     var addTargetButton = new Button('\uf024');
     addTargetButton.enabled = function(){
-      return (self.state === self.states.DRAW_TARGET);
+      return (self.state === self.states.TARGET_DRAW);
     };
     // onclick: toggle draw target mode
     addTargetButton.onClick = function(){
-      self.state = (self.state === self.states.DRAW_TARGET) ? self.states.DEFAULT : self.states.DRAW_TARGET;
+      self.state = (self.state === self.states.TARGET_DRAW) ? self.states.DEFAULT : self.states.TARGET_DRAW;
       self.dirty = true;
     };
     this.targetButtons.push(addTargetButton);
 
 
     this.solutionPolygon = null;
-    showSolution = (typeof options.showSolution === 'boolean') ? options.showSolution : false;
+    var drawSolutionPointButton = new Button('\uf040')
+      , moveSolutionButton = new Button('\uf047')
+      , deleteSolutionPointButton = new Button('\uf00d')
+      , deleteSolutionButton = new Button('\uf1f8');
+    this.solutionButtons = [ deleteSolutionButton,
+                             deleteSolutionPointButton,
+                             moveSolutionButton,
+                             drawSolutionPointButton];
+    drawSolutionPointButton.enabled = function(){
+      return (self.state === self.states.SOLUTION_DRAW);
+    };
+    drawSolutionPointButton.onClick = function(){
+      self.state = (self.state === self.states.SOLUTION_DRAW)
+                    ? self.states.DEFAULT
+                    : self.states.SOLUTION_DRAW;
+      self.dirty = true;
+    };
+    moveSolutionButton.enabled = function(){
+      return (self.state === self.states.SOLUTION_MOVE);
+    };
+    moveSolutionButton.onClick = function(){
+      self.state = (self.state === self.states.SOLUTION_MOVE)
+                    ? self.states.DEFAULT
+                    : self.states.SOLUTION_MOVE;
+      self.dirty = true;
+    };
+    deleteSolutionPointButton.enabled = function(){
+      return (self.state === self.states.SOLUTION_POINT_DELETE);
+    };
+    deleteSolutionPointButton.onClick = function(){
+      self.state = (self.state === self.states.SOLUTION_POINT_DELETE)
+                    ? self.states.DEFAULT
+                    : self.states.SOLUTION_POINT_DELETE;
+      self.dirty = true;
+    };
+    deleteSolutionButton.onClick = function(){
+      self.solutionPolygon = null;
+      self.dirty = true;
+    };
+
+    var exposeSolutionOption = (typeof options.exposeSolution === 'boolean') ? options.exposeSolution : false;
+    this.solutionMenuVisible = false;
+    if(exposeSolutionOption){
+      this.getSolutionVisible = function(){return solutionVisible;};
+      this.setSolutionVisible = function(value){
+        solutionVisible = value;
+        this.dirty = true;
+      };
+      this.showSolutionMenu = function(){
+        solutionVisible = true;
+        this.buttons = this.defaultButtons.concat(this.solutionButtons);
+        this.solutionMenuVisible = true;
+        this.dirty = true;
+      };
+      this.hideSolutionMenu = function(){
+        solutionVisible = false;
+        this.buttons = this.defaultButtons.slice();
+        this.solutionMenuVisible = false;
+        this.dirty = true;
+      };
+    }
 
     // render loop
     this.FPS = 30;
@@ -144,7 +206,7 @@
     // draw buttons
     this._drawButtons(ctx);
 
-    if(showSolution && this.solutionPolygon !== null){
+    if(solutionVisible && this.solutionPolygon !== null){
       this.solutionPolygon.draw(this.context);
     }
 
@@ -194,8 +256,8 @@
 
     // TODO make this behaviour optional
     // change color if target is within solution
-    if(showSolution                                                          // show solution flag enabled?
-       && this.solutionPolygon !== null                                      // is there a solution?
+    if(solutionVisible // show solution flag enabled?
+       && this.solutionPolygon !== null // is there a solution?
        && this.solutionPolygon.isWithinBounds(this.target.x, this.target.y)) // os the target within the solution?
       color = '#00ff00'; //green
 
@@ -236,7 +298,7 @@
 
   ImageViewer.prototype.getUIElements = function(){
     // only return the solution vertices handler if in solution drawing mode and there are some already
-    var solutionVertices = (self.state === self.states.DRAW_SOLUTION &&this.solutionPolygon !== null)
+    var solutionVertices = (this.solutionPolygon !== null)
                            ? this.solutionPolygon.getVertices()
                            : [];
     return this.buttons.concat(solutionVertices);
@@ -265,7 +327,7 @@
     this.onClick = function(){ alert('no click action set!'); };
 
     // mouse down action
-    this.onMouseDown = function(){};
+    this.onMouseDown = function(){ return false; };
   }
 
   Button.prototype.isWithinBounds = function(x, y){
@@ -318,6 +380,8 @@
   }
 
   function Vertex(x, y) {
+    var that = this;
+
     var pos = this.position = {
       x: x,
       y: y
@@ -327,11 +391,20 @@
 
     this.handleWidth = 12;
 
-    this.onClick = function(){ };
+    this.onClick = function(){
+      if(self.state === self.states.SOLUTION_POINT_DELETE){
+        self.solutionPolygon.deleteVertex(that);
+        self.dirty = true;
+      }
+    };
 
     this.onMouseDown = function(){
-      self.activeMoveElement = pos;
-      self.InputHandler.leftMouseButtonDown = true;
+      if(self.state === self.states.SOLUTION_MOVE){
+        self.activeMoveElement = pos;
+        self.InputHandler.leftMouseButtonDown = true;
+        return true;
+      }
+      return false;
     };
   }
 
@@ -386,6 +459,26 @@
     self.dirty = true;
   };
 
+  Polygon.prototype.deleteVertex = function(vertex){
+    if(this.initialVertex !== null && this.initialVertex.equals(vertex)){
+      this.initialVertex = this.initialVertex.next;
+    } else {
+      var deleted = false 
+        , current = this.initialVertex
+        , next = current.next;
+
+      while(!deleted && next !== null && next !== this.initialVertex){
+        if(next.equals(vertex)){
+          current.next = next.next;
+          deleted = true;
+        } else {
+          current = next;
+          next = current.next;
+        }
+      }
+    }
+  };
+
   Polygon.prototype.getVertices = function(){
     var vertices = [], currentVertex = this.initialVertex;
     while(currentVertex !== null){
@@ -432,9 +525,11 @@
     }
 
     // draw handles
-    this.getVertices().forEach(function(handle){
-      handle.drawHandle(ctx);
-    });
+    if(self.solutionMenuVisible){
+      this.getVertices().forEach(function(handle){
+        handle.drawHandle(ctx);
+      });
+    }
   };
 
   Polygon.prototype.isWithinBounds = function(x, y){
@@ -497,9 +592,7 @@
   InputHandler.prototype._onMouseDown = function(evt){
     if(evt.button === 0){ // left/main button
       var activeElement = self.InputHandler._getUIElement(evt);
-      if(activeElement !== null){
-        activeElement.onMouseDown(evt);
-      } else {
+      if(activeElement === null || !activeElement.onMouseDown(evt)){
         // set flag for image moving
         self.InputHandler.leftMouseButtonDown = true;
       }
@@ -524,12 +617,12 @@
             x: evt.clientX - rect.left,
             y: evt.clientY - rect.top
           };
-        if(self.state === self.states.DRAW_TARGET){
+        if(self.state === self.states.TARGET_DRAW){
           var target = self.target || { x: 0, y: 0 };
           self.target = convertToImagePosition(clickPos);
           self.dirty = true;
         }
-        if(self.state === self.states.DRAW_SOLUTION){
+        if(self.state === self.states.SOLUTION_DRAW){
           if(evt.shiftKey){
             if(self.solutionPolygon !== null && self.solutionPolygon.getVertices().length > 2){
               // close polygon
