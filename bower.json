@@ -1,0 +1,27 @@
+{
+  "name": "image-viewer",
+  "version": "0.2.0",
+  "authors": [
+    "Michael Kuenzli <michaelkuenzli@gmail.com>"
+  ],
+  "description": "HTML5/canvas-based Image Viewer",
+  "main": "viewer.js",
+  "keywords": [
+    "image",
+    "viewer",
+    "canvas"
+  ],
+  "license": "MIT",
+  "homepage": "http://pfirpfel.github.io/image-viewer",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "fontawesome": "~4.2.0"
+  }
+}
