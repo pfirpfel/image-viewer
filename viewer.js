@@ -46,21 +46,33 @@
       , x = this.canvas.width - radius - padding
       , y = this.canvas.height - radius - padding;
 
-    var zoomInButton = new Button(x, y - 50, radius, drawZoomInIcon);
-    zoomInButton.onClick = function(){ self.zoomIn(); };
-    this.buttons.push(zoomInButton);
+    this.defaultButtons = [];
 
-    var zoomOutButton = new Button(x, y, radius, drawZoomOutIcon);
+    var zoomOutButton = new Button('\uf010');
     zoomOutButton.onClick = function(){ self.zoomOut(); };
-    this.buttons.push(zoomOutButton);
+    this.defaultButtons.push(zoomOutButton);
+
+    var zoomInButton = new Button('\uf00e');
+    zoomInButton.onClick = function(){ self.zoomIn(); };
+    this.defaultButtons.push(zoomInButton);
+
+    this.buttons = this.defaultButtons.slice();
 
     // setup target feature
     this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
     this.target = null;
     this.targetButtons = [];
 
+    // delete target button
+    var deleteTargetButton = new Button('\uf1f8');
+    deleteTargetButton.onClick = function(){
+      self.target = null;
+      self.dirty = true;
+    };
+    this.targetButtons.push(deleteTargetButton);
+
     // add target button
-    var addTargetButton = new Button(x, y - 150, radius, drawTargetIcon);
+    var addTargetButton = new Button('\uf024');
     addTargetButton.enabled = function(){
       return (self.state === self.states.DRAW_TARGET);
     };
@@ -70,14 +82,6 @@
       self.dirty = true;
     };
     this.targetButtons.push(addTargetButton);
-
-    // delete target button
-    var deleteTargetButton = new Button(x, y - 100, radius, drawDeleteIcon);
-    deleteTargetButton.onClick = function(){
-      self.target = null;
-      self.dirty = true;
-    };
-    this.targetButtons.push(deleteTargetButton);
 
     // if target feature was enabled in the options, start it
     if(this.targetFeatureEnabled) this.enableTargetMode();
@@ -137,9 +141,7 @@
     ctx.restore();
 
     // draw buttons
-    this.buttons.forEach(function(button){
-      button.draw(ctx);
-    });
+    this._drawButtons(ctx);
 
     if(showSolution && this.solutionPolygon !== null){
       this.solutionPolygon.draw(this.context);
@@ -151,14 +153,26 @@
     }
   };
 
+  ImageViewer.prototype._drawButtons = function(ctx){
+    var padding = 10
+      , radius = 20
+      , gap = 2 * radius + padding
+      , x = this.canvas.width - radius - padding
+      , y = this.canvas.height - radius - padding;
+
+    for(var i = 0; i < this.buttons.length; i++){
+      this.buttons[i].draw(ctx, x, y - gap * i, radius);
+    }
+  }
+
   ImageViewer.prototype.enableTargetMode = function(){
-    this.buttons = this.buttons.concat(this.targetButtons);
+    this.buttons = this.defaultButtons.concat(this.targetButtons);
     this.targetFeatureEnabled = true;
     this.dirty = true;
   };
 
   ImageViewer.prototype.disableTargetMode = function(){
-    this.buttons = this.buttons.filter(function(b){ return self.targetButtons.indexOf(b) < 0; });
+    this.buttons = this.defaultButtons.slice();
     this.targetFeatureEnabled = false;
     self.state = self.states.DEFAULT;
     this.target = null;
@@ -227,13 +241,10 @@
     return this.buttons.concat(solutionVertices);
   };
 
-  function Button(x, y, radius, icon){
-    // centre coordinates
-    this.x = x;
-    this.y = y;
-
-    // radius
-    this.radius = radius;
+  function Button(icon){
+    // drawn on position
+    this.drawPosition = null;
+    this.drawRadius = 0;
 
     // transparency
     this.alpha = 0.5;
@@ -241,9 +252,9 @@
     // color
     this.color = '#000000';
 
-    // icon drawing function
-    // (ctx, x, y, radius, icon, color, alpha)
+    // icon unicode from awesome font
     this.icon = icon;
+    this.iconColor = '#ffffff';
 
     // enabled state
     this.enabled = false;
@@ -257,12 +268,15 @@
   }
 
   Button.prototype.isWithinBounds = function(x, y){
-    var dx = Math.abs(this.x - x)
-      , dy = Math.abs(this.y - y);
-    return  dx * dx + dy * dy <= this.radius * this.radius;
+    var dx = Math.abs(this.drawPosition.x - x)
+      , dy = Math.abs(this.drawPosition.y - y);
+    return  dx * dx + dy * dy <= this.drawRadius * this.drawRadius;
   };
 
-  Button.prototype.draw = function(ctx){
+  Button.prototype.draw = function(ctx, x, y, radius){
+    this.drawPosition = { x: x, y: y };
+    this.drawRadius = radius;
+
     // preserve context
     ctx.save();
 
@@ -274,14 +288,14 @@
 
     // draw circle
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
     ctx.closePath();
     ctx.fill();
 
     // draw icon
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
-    this.icon(ctx, this.x, this.y, this.radius);
+    drawAwesomeIcon(ctx, this.icon, this.iconColor, x, y, radius);
     ctx.restore();
 
     // restore context
@@ -300,22 +314,6 @@
 
     // draw it
     ctx.fillText(icon, x, y);
-  }
-
-  function drawZoomOutIcon(ctx, centerX, centerY, buttonRadius){
-    drawAwesomeIcon(ctx, '\uf010', '#ffffff', centerX, centerY, buttonRadius);
-  }
-
-  function drawZoomInIcon(ctx, centerX, centerY, buttonRadius){
-    drawAwesomeIcon(ctx, '\uf00e', '#ffffff', centerX, centerY, buttonRadius);
-  }
-
-  function drawTargetIcon(ctx, centerX, centerY, buttonRadius){
-    drawAwesomeIcon(ctx, '\uf024', '#ffffff', centerX, centerY, buttonRadius);
-  }
-
-  function drawDeleteIcon(ctx, centerX, centerY, buttonRadius){
-    drawAwesomeIcon(ctx, '\uf1f8', '#ffffff', centerX, centerY, buttonRadius);
   }
 
   function Vertex(x, y) {
