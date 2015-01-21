@@ -3,6 +3,9 @@
 
   var self;
 
+  // hiddenFlags
+  var showSolution = false;
+
   function ImageViewer(canvasId, imageUrl, options){
     self = this;
 
@@ -80,6 +83,7 @@
     if(this.targetFeatureEnabled) this.enableTargetMode();
 
     this.solutionPolygon = null;
+    showSolution = (typeof options.showSolution === 'boolean') ? options.showSolution : false;
 
     // render loop
     this.FPS = 30;
@@ -137,7 +141,7 @@
       button.draw(ctx);
     });
 
-    if(this.solutionPolygon !== null){
+    if(showSolution && this.solutionPolygon !== null){
       this.solutionPolygon.draw(this.context);
     }
 
@@ -175,7 +179,9 @@
 
     // TODO make this behaviour optional
     // change color if target is within solution
-    if(this.solutionPolygon !== null && this.solutionPolygon.isWithinBounds(this.target.x, this.target.y))
+    if(showSolution                                                          // show solution flag enabled?
+       && this.solutionPolygon !== null                                      // is there a solution?
+       && this.solutionPolygon.isWithinBounds(this.target.x, this.target.y)) // os the target within the solution?
       color = '#00ff00'; //green
 
     ctx.strokeStyle = ctx.fillStyle = color;
@@ -214,7 +220,10 @@
   };
 
   ImageViewer.prototype.getUIElements = function(){
-    var solutionVertices = (this.solutionPolygon !== null) ? this.solutionPolygon.getVertices() : [];
+    // only return the solution vertices handler if in solution drawing mode and there are some already
+    var solutionVertices = (self.state === self.states.DRAW_SOLUTION &&this.solutionPolygon !== null)
+                           ? this.solutionPolygon.getVertices()
+                           : [];
     return this.buttons.concat(solutionVertices);
   };
 
