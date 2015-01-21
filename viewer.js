@@ -46,13 +46,13 @@
       , x = this.canvas.width - radius - padding
       , y = this.canvas.height - radius - padding;
 
-    var plusButton = new Button(x, y - 50, radius, drawPlusIcon);
-    plusButton.onClick = function(){ self.zoomIn(); };
-    this.buttons.push(plusButton);
+    var zoomInButton = new Button(x, y - 50, radius, drawZoomInIcon);
+    zoomInButton.onClick = function(){ self.zoomIn(); };
+    this.buttons.push(zoomInButton);
 
-    var minusButton = new Button(x, y, radius, drawMinusIcon);
-    minusButton.onClick = function(){ self.zoomOut(); };
-    this.buttons.push(minusButton);
+    var zoomOutButton = new Button(x, y, radius, drawZoomOutIcon);
+    zoomOutButton.onClick = function(){ self.zoomOut(); };
+    this.buttons.push(zoomOutButton);
 
     // setup target feature
     this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
@@ -296,18 +296,18 @@
     // calculate position
     var textSize = ctx.measureText(icon)
       , x = centerX - textSize.width / 2
-      , y = centerY + buttonRadius * 0.8 / 2;
+      , y = centerY + buttonRadius * 0.7 / 2;
 
     // draw it
     ctx.fillText(icon, x, y);
   }
 
-  function drawMinusIcon(ctx, centerX, centerY, buttonRadius){
-    drawAwesomeIcon(ctx, '\uf068', '#ffffff', centerX, centerY, buttonRadius);
+  function drawZoomOutIcon(ctx, centerX, centerY, buttonRadius){
+    drawAwesomeIcon(ctx, '\uf010', '#ffffff', centerX, centerY, buttonRadius);
   }
 
-  function drawPlusIcon(ctx, centerX, centerY, buttonRadius){
-    drawAwesomeIcon(ctx, '\uf067', '#ffffff', centerX, centerY, buttonRadius);
+  function drawZoomInIcon(ctx, centerX, centerY, buttonRadius){
+    drawAwesomeIcon(ctx, '\uf00e', '#ffffff', centerX, centerY, buttonRadius);
   }
 
   function drawTargetIcon(ctx, centerX, centerY, buttonRadius){
