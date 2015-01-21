@@ -60,6 +60,9 @@
 
     // setup target feature
     this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
+    // if target feature was enabled in the options, start it
+    if(this.targetFeatureEnabled) this.enableTargetMode();
+
     this.target = null;
     this.targetButtons = [];
 
@@ -83,8 +86,6 @@
     };
     this.targetButtons.push(addTargetButton);
 
-    // if target feature was enabled in the options, start it
-    if(this.targetFeatureEnabled) this.enableTargetMode();
 
     this.solutionPolygon = null;
     showSolution = (typeof options.showSolution === 'boolean') ? options.showSolution : false;
