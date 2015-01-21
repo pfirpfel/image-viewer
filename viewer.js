@@ -226,7 +226,7 @@
     for(var i = 0; i < this.buttons.length; i++){
       this.buttons[i].draw(ctx, x, y - gap * i, radius);
     }
-  }
+  };
 
   ImageViewer.prototype.enableTargetMode = function(){
     this.buttons = this.defaultButtons.concat(this.targetButtons);
