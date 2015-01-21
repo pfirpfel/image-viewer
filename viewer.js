@@ -288,122 +288,34 @@
     ctx.restore();
   };
 
-  function drawShape(ctx, shape, closeShape){
-    /**
-    * ctx: context of canvas
-    * shape: array of point objects, like [{x:1, y:1}, {x:2, y:2}]
-    * closeShape: boolean, whether to close the path in the end,
-    *             i.e. connect the first and the last point
-    **/
+  function drawAwesomeIcon(ctx, icon, color, centerX, centerY, buttonRadius){
+    // font settings
+    ctx.font = buttonRadius + "px FontAwesome";
+    ctx.fillStyle = color;
 
-    // close shape by default
-    closeShape = (closeShape === false) ? false : true;
+    // calculate position
+    var textSize = ctx.measureText(icon)
+      , x = centerX - textSize.width / 2
+      , y = centerY + buttonRadius * 0.8 / 2;
 
-    ctx.beginPath();
-
-    // first point
-    ctx.moveTo(shape[0].x, shape[0].y);
-
-    // all other points
-    for(var i = 1; i < shape.length; i++){
-      ctx.lineTo(shape[i].x, shape[i].y);
-    }
-
-    // close the shape
-    if(closeShape) ctx.closePath();
+    // draw it
+    ctx.fillText(icon, x, y);
   }
 
   function drawMinusIcon(ctx, centerX, centerY, buttonRadius){
-    var rectLength = buttonRadius
-      , rectThickness = rectLength / 4
-      , x = centerX - rectLength / 2
-      , y = centerY - rectThickness / 2;
-
-    ctx.fillRect(x, y, rectLength, rectThickness);
+    drawAwesomeIcon(ctx, '\uf068', '#ffffff', centerX, centerY, buttonRadius);
   }
 
   function drawPlusIcon(ctx, centerX, centerY, buttonRadius){
-    /*
-        11---10
-        |     |
-    01--12    09--08
-    |              |
-    02--03    06--07
-        |     |
-        04---05
-    */
-    var rectLength = buttonRadius
-      , rectThickness = rectLength / 4
-      , shape = [
-          { // 1
-            x: centerX - rectLength / 2,
-            y: centerY - rectThickness / 2
-          },
-          { // 2
-            x: centerX - rectLength / 2,
-            y: centerY + rectThickness / 2
-          },
-          { // 3
-            x: centerX - rectThickness / 2,
-            y: centerY + rectThickness / 2
-          },
-          { // 4
-            x: centerX - rectThickness / 2,
-            y: centerY + rectLength / 2
-          },
-          { // 5
-            x: centerX + rectThickness / 2,
-            y: centerY + rectLength / 2
-          },
-          { // 6
-            x: centerX + rectThickness / 2,
-            y: centerY + rectThickness / 2
-          },
-          { // 7
-            x: centerX + rectLength / 2,
-            y: centerY + rectThickness / 2
-          },
-          { // 8
-            x: centerX + rectLength / 2,
-            y: centerY - rectThickness / 2
-          },
-          { // 9
-            x: centerX + rectThickness / 2,
-            y: centerY - rectThickness / 2
-          },
-          { // 10
-            x: centerX + rectThickness / 2,
-            y: centerY - rectLength / 2
-          },
-          { // 11
-            x: centerX - rectThickness / 2,
-            y: centerY - rectLength / 2
-          },
-          { // 12
-            x: centerX - rectThickness / 2,
-            y: centerY - rectThickness / 2
-          }
-        ];
-    drawShape(ctx, shape, true);
-    ctx.fill();
+    drawAwesomeIcon(ctx, '\uf067', '#ffffff', centerX, centerY, buttonRadius);
   }
 
   function drawTargetIcon(ctx, centerX, centerY, buttonRadius){
-    ctx.lineWidth = buttonRadius * 0.3;
-    ctx.strokeStyle = self.color;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, buttonRadius * 0.5, 0, 2 * Math.PI);
-    ctx.stroke();
+    drawAwesomeIcon(ctx, '\uf024', '#ffffff', centerX, centerY, buttonRadius);
   }
 
   function drawCrossIcon(ctx, centerX, centerY, buttonRadius){
-    ctx.save();
-      ctx.translate(centerX, centerY + buttonRadius * 0.7);
-      ctx.save();
-        ctx.rotate(Math.PI / 4);
-        drawPlusIcon(ctx, - buttonRadius / 2, - buttonRadius / 2, buttonRadius);
-      ctx.restore();
-    ctx.restore();
+    drawAwesomeIcon(ctx, '\uf1f8', '#ffffff', centerX, centerY, buttonRadius);
   }
 
   function Vertex(x, y) {
