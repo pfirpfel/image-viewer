@@ -72,7 +72,7 @@
     this.targetButtons.push(addTargetButton);
 
     // delete target button
-    var deleteTargetButton = new Button(x, y - 100, radius, drawCrossIcon);
+    var deleteTargetButton = new Button(x, y - 100, radius, drawDeleteIcon);
     deleteTargetButton.onClick = function(){
       self.target = null;
       self.dirty = true;
@@ -314,7 +314,7 @@
     drawAwesomeIcon(ctx, '\uf024', '#ffffff', centerX, centerY, buttonRadius);
   }
 
-  function drawCrossIcon(ctx, centerX, centerY, buttonRadius){
+  function drawDeleteIcon(ctx, centerX, centerY, buttonRadius){
     drawAwesomeIcon(ctx, '\uf1f8', '#ffffff', centerX, centerY, buttonRadius);
   }
 
