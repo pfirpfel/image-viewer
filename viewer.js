@@ -279,6 +279,31 @@
     ctx.restore();
   };
 
+  function drawShape(ctx, shape, closeShape){
+    /**
+    * ctx: context of canvas
+    * shape: array of point objects, like [{x:1, y:1}, {x:2, y:2}]
+    * closeShape: boolean, whether to close the path in the end,
+    *             i.e. connect the first and the last point
+    **/
+
+    // close shape by default
+    closeShape = (closeShape === false) ? false : true;
+
+    ctx.beginPath();
+
+    // first point
+    ctx.moveTo(shape[0].x, shape[0].y);
+
+    // all other points
+    for(var i = 1; i < shape.length; i++){
+      ctx.lineTo(shape[i].x, shape[i].y);
+    }
+
+    // close the shape
+    if(closeShape) ctx.closePath();
+  }
+
   function drawMinusIcon(ctx, centerX, centerY, buttonRadius){
     var rectLength = buttonRadius
       , rectThickness = rectLength / 4
@@ -299,47 +324,58 @@
         04---05
     */
     var rectLength = buttonRadius
-      , rectThickness = rectLength / 4;
-
-    ctx.beginPath();
-    // 1
-    ctx.moveTo(centerX - rectLength / 2,
-               centerY - rectThickness / 2);
-    // 2
-    ctx.lineTo(centerX - rectLength / 2,
-               centerY + rectThickness / 2);
-    // 3
-    ctx.lineTo(centerX - rectThickness / 2,
-               centerY + rectThickness / 2);
-    // 4
-    ctx.lineTo(centerX - rectThickness / 2,
-               centerY + rectLength / 2);
-    // 5
-    ctx.lineTo(centerX + rectThickness / 2,
-               centerY + rectLength / 2);
-    // 6
-    ctx.lineTo(centerX + rectThickness / 2,
-               centerY + rectThickness / 2);
-    // 7
-    ctx.lineTo(centerX + rectLength / 2,
-               centerY + rectThickness / 2);
-    // 8
-    ctx.lineTo(centerX + rectLength / 2,
-               centerY - rectThickness / 2);
-    // 9
-    ctx.lineTo(centerX + rectThickness / 2,
-               centerY - rectThickness / 2);
-    // 10
-    ctx.lineTo(centerX + rectThickness / 2,
-               centerY - rectLength / 2);
-    // 11
-    ctx.lineTo(centerX - rectThickness / 2,
-               centerY - rectLength / 2);
-    // 12
-    ctx.lineTo(centerX - rectThickness / 2,
-               centerY - rectThickness / 2);
-
-    ctx.closePath();
+      , rectThickness = rectLength / 4
+      , shape = [
+          { // 1
+            x: centerX - rectLength / 2,
+            y: centerY - rectThickness / 2
+          },
+          { // 2
+            x: centerX - rectLength / 2,
+            y: centerY + rectThickness / 2
+          },
+          { // 3
+            x: centerX - rectThickness / 2,
+            y: centerY + rectThickness / 2
+          },
+          { // 4
+            x: centerX - rectThickness / 2,
+            y: centerY + rectLength / 2
+          },
+          { // 5
+            x: centerX + rectThickness / 2,
+            y: centerY + rectLength / 2
+          },
+          { // 6
+            x: centerX + rectThickness / 2,
+            y: centerY + rectThickness / 2
+          },
+          { // 7
+            x: centerX + rectLength / 2,
+            y: centerY + rectThickness / 2
+          },
+          { // 8
+            x: centerX + rectLength / 2,
+            y: centerY - rectThickness / 2
+          },
+          { // 9
+            x: centerX + rectThickness / 2,
+            y: centerY - rectThickness / 2
+          },
+          { // 10
+            x: centerX + rectThickness / 2,
+            y: centerY - rectLength / 2
+          },
+          { // 11
+            x: centerX - rectThickness / 2,
+            y: centerY - rectLength / 2
+          },
+          { // 12
+            x: centerX - rectThickness / 2,
+            y: centerY - rectThickness / 2
+          }
+        ];
+    drawShape(ctx, shape, true);
     ctx.fill();
   }
 
