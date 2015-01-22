@@ -2,7 +2,7 @@
   "use strict";
 
   function ImageViewer(canvasId, imageUrl, options){
-    var self = this; // TODO: rename to something like viewerInstance
+    var self = this;
 
     options = (typeof options === 'object') ? options : {};
 
@@ -648,7 +648,6 @@
       }
     }
 
-    // TODO cleanup
     function onMouseClick(evt){
       if(evt.button === 0){ // left/main button
         var activeElement = getUIElement(evt);
@@ -683,7 +682,6 @@
       }
     }
 
-    // TODO cleanup
     function onMouseWheel(evt){
       if (!evt) evt = event;
       evt.preventDefault();
@@ -694,7 +692,6 @@
       }
     }
 
-    // TODO cleanup
     function onMouseMove(evt){
       var rect = canvas.getBoundingClientRect()
         , newPos = {
@@ -805,8 +802,6 @@
       ctx.fillText(icon, x, y);
     }
 
-    // DEBUG
-    this.getState = function(){ return state; };
   }
 
   window.ImageViewer = ImageViewer;
