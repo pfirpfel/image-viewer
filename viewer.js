@@ -41,6 +41,7 @@
 
     // buttons
     this.buttons = [];
+    this.currentTooltip = null;
 
     // add buttons
     var padding = 10
@@ -50,11 +51,11 @@
 
     this.defaultButtons = [];
 
-    var zoomOutButton = new Button('\uf010');
+    var zoomOutButton = new Button('\uf010', 'Zoom out');
     zoomOutButton.onClick = function(){ self.zoomOut(); };
     this.defaultButtons.push(zoomOutButton);
 
-    var zoomInButton = new Button('\uf00e');
+    var zoomInButton = new Button('\uf00e', 'Zoom in');
     zoomInButton.onClick = function(){ self.zoomIn(); };
     this.defaultButtons.push(zoomInButton);
 
@@ -69,7 +70,7 @@
     this.targetButtons = [];
 
     // delete target button
-    var deleteTargetButton = new Button('\uf1f8');
+    var deleteTargetButton = new Button('\uf1f8', 'Delete target');
     deleteTargetButton.onClick = function(){
       self.target = null;
       self.dirty = true;
@@ -77,7 +78,7 @@
     this.targetButtons.push(deleteTargetButton);
 
     // add target button
-    var addTargetButton = new Button('\uf024');
+    var addTargetButton = new Button('\uf024', 'Set target');
     addTargetButton.enabled = function(){
       return (self.state === self.states.TARGET_DRAW);
     };
@@ -90,10 +91,10 @@
 
 
     this.solutionPolygon = null;
-    var drawSolutionPointButton = new Button('\uf040')
-      , moveSolutionButton = new Button('\uf047')
-      , deleteSolutionPointButton = new Button('\uf00d')
-      , deleteSolutionButton = new Button('\uf1f8');
+    var drawSolutionPointButton = new Button('\uf040', 'Draw new solution point')
+      , moveSolutionButton = new Button('\uf047', 'Move solution point')
+      , deleteSolutionPointButton = new Button('\uf00d', 'Delete solution point')
+      , deleteSolutionButton = new Button('\uf1f8', 'Delete solution');
     this.solutionButtons = [ deleteSolutionButton,
                              deleteSolutionPointButton,
                              moveSolutionButton,
@@ -223,8 +224,36 @@
       , x = this.canvas.width - radius - padding
       , y = this.canvas.height - radius - padding;
 
+    // draw buttons
     for(var i = 0; i < this.buttons.length; i++){
       this.buttons[i].draw(ctx, x, y - gap * i, radius);
+    }
+
+    // draw tooltip
+    if(this.currentTooltip != null){
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      var fontSize = radius;
+      ctx.font = fontSize + "px sans-serif";
+
+      // calculate position
+      var textSize = ctx.measureText(this.currentTooltip).width
+        , rectWidth = textSize + padding
+        , rectHeight = fontSize * 0.70 + padding
+        , rectX = this.canvas.width
+                  - (2 * radius+ + 2 * padding) // buttons
+                  - rectWidth
+        , rectY = this.canvas.height - rectHeight - padding
+        , textX = rectX + 0.5 * padding
+        , textY = this.canvas.height - 1.5 * padding;
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(this.currentTooltip, textX, textY);
+
+      ctx.restore();
     }
   };
 
@@ -304,7 +333,7 @@
     return this.buttons.concat(solutionVertices);
   };
 
-  function Button(icon){
+  function Button(icon, tooltip){
     // drawn on position
     this.drawPosition = null;
     this.drawRadius = 0;
@@ -318,6 +347,9 @@
     // icon unicode from awesome font
     this.icon = icon;
     this.iconColor = '#ffffff';
+
+    // tooltip
+    this.tooltip = tooltip || null;
 
     // enabled state
     this.enabled = false;
@@ -670,6 +702,15 @@
         self.activeMoveElement.y += deltaY / self.scale;
       }
       self.dirty = true;
+    } else {
+      var activeElement = self.InputHandler._getUIElement(evt)
+        , oldToolTip = self.currentTooltip;
+      if(activeElement !== null && typeof activeElement.tooltip !== 'undefnied'){
+        self.currentTooltip = activeElement.tooltip;
+      } else {
+        self.currentTooltip = null;
+      }
+      if(oldToolTip !== self.currentTooltip) self.dirty = true;
     }
     self.InputHandler.mouseLastPos = newPos;
   };
