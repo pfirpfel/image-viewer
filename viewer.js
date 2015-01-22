@@ -248,7 +248,7 @@
         , textY = this.canvas.height - 1.5 * padding;
 
       ctx.fillStyle = '#000000';
-      ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+      drawRoundRectangle(ctx, rectX, rectY, rectWidth, rectHeight, 8, true, false);
 
       ctx.fillStyle = '#ffffff';
       ctx.fillText(this.currentTooltip, textX, textY);
@@ -332,6 +332,28 @@
                            : [];
     return this.buttons.concat(solutionVertices);
   };
+
+  function drawRoundRectangle(ctx, x, y, width, height, radius, fill, stroke){
+    radius = (typeof radius === 'number') ? radius : 5;
+    fill = (typeof fill === 'boolean') ? fill : true; // fill = default
+    stroke = (typeof stroke === 'boolean') ? stroke : false;
+
+    // draw round rectangle
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
+  }
 
   function Button(icon, tooltip){
     // drawn on position
