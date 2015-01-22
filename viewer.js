@@ -535,6 +535,36 @@
       return inBounds;
     };
 
+    this.exportSolution = function(){
+      // return empty array if solution is empty
+      if(this.solution === null) return [];
+
+      var exportedSolution = [];
+      var vertices = this.solution.getVertices();
+      for(var i = 0; i < vertices.length; i++){
+        exportedSolution.push({
+          x: vertices[i].position.x,
+          y: vertices[i].position.y
+        });
+      }
+      return exportedSolution;
+    };
+
+    this.importSolution = function(importedSolution){
+      var initialVertex = new Vertex(importedSolution[0].x, importedSolution[0].y)
+        , current = initialVertex
+        , next = null;
+
+      for(var i = 1; i < importedSolution.length; i++){
+        next = new Vertex(importedSolution[i].x, importedSolution[i].y);
+        current.next = next;
+        current = next;
+      }
+
+      this.solution = new Polygon(initialVertex);
+      dirty = true;
+    };
+
     function drawTarget(ctx){
       // preserve context
       ctx.save();
