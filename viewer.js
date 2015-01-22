@@ -12,36 +12,36 @@
     options = (typeof options === 'object') ? options : {};
 
     // canvas
-    this.canvas = document.getElementById(canvasId);
-    this.context = this.canvas.getContext("2d");
+    this.canvas = document.getElementById(canvasId);// TODO: hide
+    this.context = this.canvas.getContext("2d");// TODO: hide
 
     // dirty state
-    this.dirty = true;
+    this.dirty = true;// TODO: hide
 
     // image scale
-    this.scale = 1;
-    this.scaleStep = 0.1;
+    this.scale = 1;// TODO: hide
+    this.scaleStep = 0.1;// TODO: hide
 
     // image center (scroll offset)
-    this.center = { x: 0, y: 0 };
+    this.center = { x: 0, y: 0 };// TODO: hide
 
     // image
     this.image = new Image();
     this.image.addEventListener('load', this._onImageLoad, false);
     this.image.src = imageUrl;
 
-    this.states = {
+    this.states = {// TODO: hide
       DEFAULT: 0,
       TARGET_DRAW: 1,
       SOLUTION_DRAW: 2,
       SOLUTION_MOVE: 3,
       SOLUTION_POINT_DELETE: 4
     };
-    this.state = this.states.DEFAULT;
+    this.state = this.states.DEFAULT;// TODO: hide
 
     // buttons
-    this.buttons = [];
-    this.currentTooltip = null;
+    this.buttons = [];// TODO: hide
+    this.currentTooltip = null;// TODO: hide
 
     // add buttons
     var padding = 10
@@ -49,7 +49,7 @@
       , x = this.canvas.width - radius - padding
       , y = this.canvas.height - radius - padding;
 
-    this.defaultButtons = [];
+    this.defaultButtons = [];// TODO: hide
 
     var zoomOutButton = new Button('\uf010', 'Zoom out');
     zoomOutButton.onClick = function(){ self.zoomOut(); };
@@ -59,15 +59,16 @@
     zoomInButton.onClick = function(){ self.zoomIn(); };
     this.defaultButtons.push(zoomInButton);
 
-    this.buttons = this.defaultButtons.slice();
+    this.buttons = this.defaultButtons.slice();// TODO: hide
 
+    // TODO: hide
     // setup target feature
     this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
     // if target feature was enabled in the options, start it
     if(this.targetFeatureEnabled) this.enableTargetMode();
 
     this.target = null;
-    this.targetButtons = [];
+    this.targetButtons = [];// TODO: hide
 
     // delete target button
     var deleteTargetButton = new Button('\uf1f8', 'Delete target');
@@ -90,11 +91,12 @@
     this.targetButtons.push(addTargetButton);
 
 
-    this.solutionPolygon = null;
+    this.solutionPolygon = null;//TODO expose under name 'solution'
     var drawSolutionPointButton = new Button('\uf040', 'Draw new solution point')
       , moveSolutionButton = new Button('\uf047', 'Move solution point')
       , deleteSolutionPointButton = new Button('\uf00d', 'Delete solution point')
       , deleteSolutionButton = new Button('\uf1f8', 'Delete solution');
+    // TODO: hide
     this.solutionButtons = [ deleteSolutionButton,
                              deleteSolutionPointButton,
                              moveSolutionButton,
@@ -132,8 +134,8 @@
     };
 
     var exposeSolutionOption = (typeof options.exposeSolution === 'boolean') ? options.exposeSolution : false;
-    this.solutionMenuVisible = false;
-    if(exposeSolutionOption){
+    this.solutionMenuVisible = false;// TODO: hide
+    if(exposeSolutionOption){// TODO: don't expose anymore
       this.getSolutionVisible = function(){return solutionVisible;};
       this.setSolutionVisible = function(value){
         solutionVisible = value;
@@ -154,13 +156,14 @@
     }
 
     // render loop
-    this.FPS = 30;
-    this.tickInterval = null;
+    this.FPS = 30;// TODO: hide
+    this.tickInterval = null;// TODO: hide
 
-    this.InputHandler = new InputHandler(this.canvas, this);
-    this.activeMoveElement = this.center;
+    this.InputHandler = new InputHandler(this.canvas, this);// TODO: hide
+    this.activeMoveElement = this.center;// TODO: hide
   }
 
+  // TODO: hide
   ImageViewer.prototype._onImageLoad = function(){
     // set scale to use as much space inside the canvas as possible
     if(((self.canvas.height / self.image.height) * self.image.width) <= self.canvas.width){
@@ -183,6 +186,7 @@
     self.tickInterval = setInterval(function(){ self._render(); }, 1000 / self.FPS);
   };
 
+  // TODO: hide
   ImageViewer.prototype._render = function(){
     // check if dirty
     if(!this.dirty) return;
@@ -217,6 +221,7 @@
     }
   };
 
+  // TODO: hide
   ImageViewer.prototype._drawButtons = function(ctx){
     var padding = 10
       , radius = 20
@@ -257,12 +262,14 @@
     }
   };
 
+  // TODO: hide/remove
   ImageViewer.prototype.enableTargetMode = function(){
     this.buttons = this.defaultButtons.concat(this.targetButtons);
     this.targetFeatureEnabled = true;
     this.dirty = true;
   };
 
+  // TODO: hide/remove
   ImageViewer.prototype.disableTargetMode = function(){
     this.buttons = this.defaultButtons.slice();
     this.targetFeatureEnabled = false;
@@ -271,6 +278,7 @@
     this.dirty = true;
   };
 
+  // TODO: hide
   ImageViewer.prototype._drawTarget = function(ctx){
     // preserve context
     ctx.save();
@@ -325,6 +333,7 @@
     this.dirty = true;
   };
 
+  // TODO: hide
   ImageViewer.prototype.getUIElements = function(){
     // only return the solution vertices handler if in solution drawing mode and there are some already
     var solutionVertices = (this.solutionPolygon !== null)
