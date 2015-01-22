@@ -1,11 +1,6 @@
 (function (window) {
   "use strict";
 
-  //var self;
-
-  // hiddenFlags
-  var solutionVisible = false; // todo change/move
-
   function ImageViewer(canvasId, imageUrl, options){
     var self = this; // TODO: rename to something like viewerInstance
 
@@ -20,37 +15,42 @@
 
     // image scale
       , scale = 1
-      , scaleStep = 0.1// TODO: hide
+      , scaleStep = 0.1
 
-    // image center (scroll offset)
-      , center = { x: 0, y: 0 }// TODO: hide
+    // image centre (scroll offset)
+      , centre = { x: 0, y: 0 }
 
-      , states = {// TODO: hide
+    // viewer states
+      , states = {
           DEFAULT: 0,
           TARGET_DRAW: 1,
           SOLUTION_DRAW: 2,
           SOLUTION_MOVE: 3,
           SOLUTION_POINT_DELETE: 4
         }
-      , state = states.DEFAULT// TODO: hide
+      , state = states.DEFAULT
 
     // buttons
-      , buttons = []// TODO: hide
-      , defaultButtons = [] // TODO: hide
-      , currentTooltip = null// TODO: hide
+      , buttons = []
+      , defaultButtons = []
+      , currentTooltip = null
 
     // render loop
       , FPS = 30
       , tickInterval = null
 
     // Input handling
-      , activeMoveElement = center //TODO: hide
-      , leftMouseButtonDown = false //TODO: hide
-      , mouseLastPos = null //TODO: hide
+      , activeMoveElement = centre
+      , leftMouseButtonDown = false
+      , mouseLastPos = null
 
     // target feature
+    // TODO: hide again
     //  , targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false
-      , targetButtons = [];// TODO: hide
+      , targetButtons = []
+
+    // solution feature
+      , solutionVisible = false; // TODO: transform to option
 
     // image
     this.image = new Image();
@@ -62,7 +62,7 @@
     this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
 
     // solution
-    this.solutionPolygon = null;//TODO expose under name 'solution'
+    this.solution = null;
 
     function onImageLoad(){
       // set scale to use as much space inside the canvas as possible
@@ -72,9 +72,9 @@
         scale = canvas.width / self.image.width;
       }
 
-      // center at image center
-      center.x = self.image.width / 2;
-      center.y = self.image.height / 2;
+      // centre at image centre
+      centre.x = self.image.width / 2;
+      centre.y = self.image.height / 2;
 
       // image changed
       dirty = true;
@@ -105,7 +105,7 @@
     zoomInButton.onClick = function(){ self.zoomIn(); };
     defaultButtons.push(zoomInButton);
 
-    buttons = defaultButtons.slice();// TODO: hide
+    buttons = defaultButtons.slice();
 
     // delete target button
     var deleteTargetButton = new Button('\uf1f8', 'Delete target');
@@ -149,7 +149,7 @@
       , moveSolutionButton = new Button('\uf047', 'Move solution point')
       , deleteSolutionPointButton = new Button('\uf00d', 'Delete solution point')
       , deleteSolutionButton = new Button('\uf1f8', 'Delete solution')
-      , solutionButtons = [ deleteSolutionButton, // TODO: hide
+      , solutionButtons = [ deleteSolutionButton,
                              deleteSolutionPointButton,
                              moveSolutionButton,
                              drawSolutionPointButton];
@@ -182,7 +182,7 @@
       dirty = true;
     };
     deleteSolutionButton.onClick = function(){
-      self.solutionPolygon = null;
+      self.solution = null;
       dirty = true;
     };
 
@@ -237,8 +237,8 @@
 
       // draw image (transformed and scaled)
       ctx.save();
-      var translateX = canvas.width / 2 - center.x * scale
-        , translateY = canvas.height / 2 - center.y * scale;
+      var translateX = canvas.width / 2 - centre.x * scale
+        , translateY = canvas.height / 2 - centre.y * scale;
 
       ctx.translate(translateX, translateY);
       ctx.scale(scale, scale);
@@ -250,8 +250,8 @@
       // draw buttons
       drawButtons(ctx);
 
-      if(solutionVisible && self.solutionPolygon !== null){
-        self.solutionPolygon.draw(ctx);
+      if(solutionVisible && self.solution !== null){
+        self.solution.draw(ctx);
       }
 
       // draw target
@@ -324,12 +324,12 @@
 
     function convertToImagePosition(canvasPosition){
       var visiblePart = {
-            x: center.x >= (canvas.width / scale / 2) ? center.x - canvas.width / scale / 2 : 0,
-            y: center.y >= (canvas.height / scale / 2) ? center.y - canvas.height / scale / 2 : 0
+            x: centre.x >= (canvas.width / scale / 2) ? centre.x - canvas.width / scale / 2 : 0,
+            y: centre.y >= (canvas.height / scale / 2) ? centre.y - canvas.height / scale / 2 : 0
         }
         , canvasImage = {
-            x: (center.x >= (canvas.width / scale / 2)) ? 0 : canvas.width / 2 - center.x * scale,
-            y: (center.y >= (canvas.height / scale / 2)) ? 0 : canvas.height / 2 - center.y * scale
+            x: (centre.x >= (canvas.width / scale / 2)) ? 0 : canvas.width / 2 - centre.x * scale,
+            y: (centre.y >= (canvas.height / scale / 2)) ? 0 : canvas.height / 2 - centre.y * scale
         }
         , imagePosition = {};
 
@@ -350,13 +350,13 @@
         x: (
               imagePosition.x  // x-position on picture
             + canvas.width / scale / 2 // offset of scaled canvas
-            - center.x // scroll offset of image
+            - centre.x // scroll offset of image
            ) * scale, // scale the transformation
 
         y: (
               imagePosition.y  // y-position on picture
             + canvas.height / scale / 2 // offset of scaled canvas
-            - center.y // scroll offset of image
+            - centre.y // scroll offset of image
            ) * scale // scale the transformation
       };
     }
@@ -373,14 +373,14 @@
 
       this.handleWidth = 12;
 
-      this.onClick = function(){ // TODO: either move vertex class into viewer scope or define onClick in there
+      this.onClick = function(){
         if(state === states.SOLUTION_POINT_DELETE){
-          self.solutionPolygon.deleteVertex(vertexInstance);
+          self.solution.deleteVertex(vertexInstance);
           dirty = true;
         }
       };
 
-      this.onMouseDown = function(){ // TODO: either move vertex class into viewer scope or define onMouseDown in there
+      this.onMouseDown = function(){
         if(state === states.SOLUTION_MOVE){
           activeMoveElement = pos;
           leftMouseButtonDown = true;
@@ -550,8 +550,8 @@
       // TODO make this behaviour optional
       // change color if target is within solution
       if(solutionVisible // show solution flag enabled?
-         && self.solutionPolygon !== null // is there a solution?
-         && self.solutionPolygon.isWithinBounds(self.target.x, self.target.y)) // os the target within the solution?
+         && self.solution !== null // is there a solution?
+         && self.solution.isWithinBounds(self.target.x, self.target.y)) // os the target within the solution?
         color = '#00ff00'; //green
 
       ctx.strokeStyle = ctx.fillStyle = color;
@@ -581,8 +581,8 @@
 
     function getUIElements(){
       // only return the solution vertices handler if in solution drawing mode and there are some already
-      var solutionVertices = (self.solutionPolygon !== null)
-                             ? self.solutionPolygon.getVertices()
+      var solutionVertices = (self.solution !== null)
+                             ? self.solution.getVertices()
                              : [];
       return buttons.concat(solutionVertices);
     }
@@ -613,7 +613,7 @@
 
     function onMouseUp(evt){
       if(evt.button === 0){ // left/main button
-        activeMoveElement = center;
+        activeMoveElement = centre;
         leftMouseButtonDown = false;
       }
     }
@@ -637,15 +637,15 @@
           if(state === states.SOLUTION_DRAW){
             if(evt.shiftKey){
               // close polygon if it has more than 2 vertices
-              if(self.solutionPolygon !== null && self.solutionPolygon.getVertices().length > 2){
-                self.solutionPolygon.addVertex(self.solutionPolygon.initialVertex);
+              if(self.solution !== null && self.solution.getVertices().length > 2){
+                self.solution.addVertex(self.solution.initialVertex);
                 state = states.DEFAULT;
               }
             } else {
               var newVertexPosition = convertToImagePosition(clickPos)
                 , newVertex = new Vertex(newVertexPosition.x, newVertexPosition.y);
-              if(self.solutionPolygon === null) self.solutionPolygon = new Polygon();
-              self.solutionPolygon.addVertex(newVertex);
+              if(self.solution === null) self.solution = new Polygon();
+              self.solution.addVertex(newVertex);
             }
             dirty = true;
           }
@@ -675,7 +675,7 @@
         var deltaX = newPos.x - mouseLastPos.x
           , deltaY = newPos.y - mouseLastPos.y;
 
-        if(activeMoveElement === center){
+        if(activeMoveElement === centre){
           activeMoveElement.x -= deltaX / scale;
           activeMoveElement.y -= deltaY / scale;
         } else {
@@ -726,7 +726,7 @@
     }
 
     Button.prototype.isWithinBounds = function(x, y){
-      if(this.drawPosition == null) return false;
+      if(this.drawPosition === null) return false;
       var dx = Math.abs(this.drawPosition.x - x)
         , dy = Math.abs(this.drawPosition.y - y);
       return  dx * dx + dy * dy <= this.drawRadius * this.drawRadius;
@@ -761,15 +761,15 @@
       ctx.restore();
     };
 
-    function drawAwesomeIcon(ctx, icon, color, centerX, centerY, buttonRadius){
+    function drawAwesomeIcon(ctx, icon, color, centreX, centreY, buttonRadius){
       // font settings
       ctx.font = buttonRadius + "px FontAwesome";
       ctx.fillStyle = color;
 
       // calculate position
       var textSize = ctx.measureText(icon)
-        , x = centerX - textSize.width / 2
-        , y = centerY + buttonRadius * 0.7 / 2;
+        , x = centreX - textSize.width / 2
+        , y = centreY + buttonRadius * 0.7 / 2;
 
       // draw it
       ctx.fillText(icon, x, y);
