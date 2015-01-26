@@ -742,6 +742,10 @@
       clearInterval(tickInterval);
     };
 
+    this.refresh = function(){
+      self.dirty = true;
+    }
+
     function initialize(){
       //// init image
       self.image.addEventListener('load', onImageLoad, false);

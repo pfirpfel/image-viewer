@@ -3,16 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <title>Image Viewer</title>
+    <script src="lib/webfontloader/webfontloader.js"></script>
     <script src="viewer.js"></script>
-    <style>
-    @font-face {
-      font-family: 'FontAwesome';
-      src: url('lib/fontawesome/fonts/fontawesome-webfont.eot?v=4.2.0');
-      src: url('lib/fontawesome/fonts/fontawesome-webfont.eot?#iefix&v=4.2.0') format('embedded-opentype'), url('lib/fontawesome/fonts/fontawesome-webfont.woff?v=4.2.0') format('woff'), url('lib/fontawesome/fonts/fontawesome-webfont.ttf?v=4.2.0') format('truetype'), url('lib/fontawesome/fonts/fontawesome-webfont.svg?v=4.2.0#fontawesomeregular') format('svg');
-      font-weight: normal;
-      font-style: normal;
-    }
-    </style>
   </head>
   <body>
     <h1>Image Viewer</h1>
@@ -35,6 +27,21 @@
         , myImageViewer = new ImageViewer(canvasId, imageSrc)
         , solution = []
         , target = null;
+
+      WebFont.load({
+        custom: {
+          families: ['FontAwesome'],
+          urls: ['css/fonts.css'],
+          testStrings: {
+            // Fontawesome does not contain 'normal' characters,
+            // therefore we need to test 'special ones'
+            'FontAwesome': '\uf010\uf00e\uf1f8\uf024\uf040\uf047\uf00d\uf1f8'
+          }
+        },
+        fontactive: function() {
+          myImageViewer.refresh();
+        }
+      });
 
       // methods to interact with viewer
       function saveState(){
