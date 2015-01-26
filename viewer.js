@@ -4,6 +4,17 @@
   function ImageViewer(canvasId, imageUrl, options){
     var self = this;
 
+    // options-object
+    // possible start options:
+    // * mode:     string (other than default viewer-only mode)
+    //             - 'editTarget'   : displays target and target related buttons
+    //             - 'editSolution' : displays solution and solution related buttons
+    //             - 'showSolution' : displays target and solution
+    // * target:   position-object, like { x: 0; y: 0; }
+    //             position of target inside the image
+    // * solution: array of positions, like [{ x: 0; y: 0; }, { x: 1; y: 1; }]
+    //             the positions represent vertices which make up the solution
+    //             polygon
     options = (typeof options === 'object') ? options : {};
 
     // canvas
@@ -30,7 +41,7 @@
         }
       , state = states.DEFAULT
 
-    // buttons
+    //// buttons
 
       // default buttons that are always visible
       , zoomOutButton = new Button('\uf010', 'Zoom out')
@@ -55,6 +66,7 @@
       // contains all active buttons
       , buttons = defaultButtons.slice()
 
+      // current tool tip (used to track change of tool tip)
       , currentTooltip = null
 
     // render loop
@@ -62,8 +74,11 @@
       , tickInterval = null
 
     // Input handling
+      // active element (mainly) used for dragging
       , activeMoveElement = centre
+      // track state of left mouse button (even outside the canvas)
       , leftMouseButtonDown = false
+      // keep last mouse position to calculate drag distance
       , mouseLastPos = null
 
     // target feature
@@ -744,7 +759,7 @@
 
     this.refresh = function(){
       self.dirty = true;
-    }
+    };
 
     function initialize(){
       //// init image
