@@ -16,8 +16,10 @@
   </head>
   <body>
     <h1>Image Viewer</h1>
-    <button onclick="javascript:toggleTargetMode();">toggle target mode</button>
-    <button onclick="javascript:toggleSolution();">toggle solution</button><br>
+    <button onclick="javascript:toDefault();">Default mode</button>
+    <button onclick="javascript:toEditSolution();">Step 1: Create solution</button>
+    <button onclick="javascript:toEditTarget();">Step 2: Give answer</button>
+    <button onclick="javascript:toShowSolution();">Step 3: Check answer</button><br>
     <canvas id="viewerCanvas" width="800" height="500" style="border: 1px solid black;"></canvas>
     <p>
     Select picture:
@@ -28,37 +30,54 @@
     </p>
     <script>
       // initialize image viewer
-      var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png', { target: false, exposeSolution: true });
+      var imageSrc = 'example-assets/target.png'
+        , canvasId = 'viewerCanvas'
+        , myImageViewer = new ImageViewer(canvasId, imageSrc)
+        , solution = []
+        , target = null;
 
       // methods to interact with viewer
+      function saveState(){
+        target = myImageViewer.target;
+        solution = myImageViewer.exportSolution();
+      }
+
+      function toDefault(){
+        if(myImageViewer !== null){
+          myImageViewer.dispose();
+        }
+        myImageViewer = new ImageViewer(canvasId, imageSrc);
+        solution = [];
+        target = null;
+      }
+
+      function toEditTarget(){
+        reloadImageViewer('editTarget');
+      }
+
+      function toEditSolution(){
+        reloadImageViewer('editSolution');
+      }
+
+      function toShowSolution(){
+        reloadImageViewer('showSolution');
+      }
+
+      function reloadImageViewer(mode){
+        if(myImageViewer !== null){
+          saveState();
+          myImageViewer.dispose();
+        }
+        var options = { mode: mode,
+                        solution: solution,
+                        target: target };
+        myImageViewer = new ImageViewer(canvasId, imageSrc, options);
+      }
 
       // change the image
       function setImage(newSrc){
+        imageSrc = newSrc;
         myImageViewer.image.src = newSrc;
-      }
-
-      // enable/disable target mode
-      function toggleTargetMode(){
-        if(myImageViewer.targetFeatureEnabled){
-          myImageViewer.disableTargetMode();
-        } else {
-          myImageViewer.enableTargetMode();
-        }
-      }
-
-      function toggleSolution(){
-        if(myImageViewer.showSolutionMenu){
-          if(myImageViewer.getSolutionVisible()){
-            myImageViewer.hideSolutionMenu();
-          } else{
-            myImageViewer.showSolutionMenu();
-          }
-        }
-      }
-
-      function deleteSolution(){
-        myImageViewer.solutionPolygon = null;
-        myImageViewer.dirty = true;
       }
     </script>
   </body>

@@ -31,8 +31,30 @@
       , state = states.DEFAULT
 
     // buttons
-      , buttons = []
-      , defaultButtons = []
+
+      // default buttons that are always visible
+      , zoomOutButton = new Button('\uf010', 'Zoom out')
+      , zoomInButton = new Button('\uf00e', 'Zoom in')
+      , defaultButtons = [zoomOutButton, zoomInButton]
+
+      // buttons for target feature
+      , deleteTargetButton = new Button('\uf1f8', 'Delete target')
+      , addTargetButton = new Button('\uf024', 'Set target')
+      , targetButtons = [deleteTargetButton, addTargetButton]
+
+      // buttons for the solution feature
+      , drawSolutionPointButton = new Button('\uf040', 'Draw new solution point')
+      , moveSolutionButton = new Button('\uf047', 'Move solution point')
+      , deleteSolutionPointButton = new Button('\uf00d', 'Delete solution point')
+      , deleteSolutionButton = new Button('\uf1f8', 'Delete solution')
+      , solutionButtons = [deleteSolutionButton,
+                           deleteSolutionPointButton,
+                           moveSolutionButton,
+                           drawSolutionPointButton]
+
+      // contains all active buttons
+      , buttons = defaultButtons.slice()
+
       , currentTooltip = null
 
     // render loop
@@ -45,24 +67,61 @@
       , mouseLastPos = null
 
     // target feature
-    // TODO: hide again
-    //  , targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false
-      , targetButtons = []
+      , targetEditable = (typeof options.mode === 'string' && options.mode === 'editTarget')
+      , targetVisible = targetEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
 
     // solution feature
-      , solutionVisible = false; // TODO: transform to option
+      , solutionEditable = (typeof options.mode === 'string' && options.mode === 'editSolution')
+      , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution');
 
     // image
     this.image = new Image();
-    this.image.addEventListener('load', onImageLoad, false);
-    this.image.src = imageUrl;
 
     // target
-    this.target = null;
-    this.targetFeatureEnabled = (typeof options.target === 'boolean') ? options.target : false;
+    this.target = (typeof options.target === 'object' && options.target !== null) ? options.target : null;
 
     // solution
     this.solution = null;
+
+    this.exportSolution = function(){
+      // return empty array if solution is empty
+      if(this.solution === null) return [];
+
+      var exportedSolution = [];
+      var vertices = this.solution.getVertices();
+      //if closed path, add start point at the end again
+      if(vertices[vertices.length - 1].next === vertices[0]) vertices.push(vertices[0]);
+      for(var i = 0; i < vertices.length; i++){
+        exportedSolution.push({
+          x: vertices[i].position.x,
+          y: vertices[i].position.y
+        });
+      }
+      return exportedSolution;
+    };
+
+    this.importSolution = function(importedSolution){
+      if(importedSolution.length < 1){
+        this.solution = null;
+        return;
+      }
+      var initialVertex = new Vertex(importedSolution[0].x, importedSolution[0].y)
+        , current = initialVertex
+        , next = null;
+
+      for(var i = 1; i < importedSolution.length; i++){
+        next = new Vertex(importedSolution[i].x, importedSolution[i].y);
+        if(next.equals(initialVertex)){
+          current.next = initialVertex;
+          break;
+        }
+        current.next = next;
+        current = next;
+      }
+
+      this.solution = new Polygon(initialVertex);
+      dirty = true;
+    };
 
     function onImageLoad(){
       // set scale to use as much space inside the canvas as possible
@@ -86,7 +145,6 @@
       tickInterval = setInterval(function(){ render(); }, 1000 / FPS);
     }
 
-    // Zooming
     this.zoomIn = function(){
       scale = scale * (1 + scaleStep);
       dirty = true;
@@ -96,135 +154,6 @@
       scale = scale * (1 - scaleStep);
       dirty = true;
     };
-
-    var zoomOutButton = new Button('\uf010', 'Zoom out');
-    zoomOutButton.onClick = function(){ self.zoomOut(); };
-    defaultButtons.push(zoomOutButton);
-
-    var zoomInButton = new Button('\uf00e', 'Zoom in');
-    zoomInButton.onClick = function(){ self.zoomIn(); };
-    defaultButtons.push(zoomInButton);
-
-    buttons = defaultButtons.slice();
-
-    // delete target button
-    var deleteTargetButton = new Button('\uf1f8', 'Delete target');
-    deleteTargetButton.onClick = function(){
-      self.target = null;
-      dirty = true;
-    };
-    targetButtons.push(deleteTargetButton);
-
-    // add target button
-    var addTargetButton = new Button('\uf024', 'Set target');
-    addTargetButton.enabled = function(){
-      return (state === states.TARGET_DRAW);
-    };
-    // onclick: toggle draw target mode
-    addTargetButton.onClick = function(){
-      state = (state === states.TARGET_DRAW) ? states.DEFAULT : states.TARGET_DRAW;
-      dirty = true;
-    };
-    targetButtons.push(addTargetButton);
-
-    // TODO: remove
-    this.enableTargetMode = function(){
-      buttons = defaultButtons.concat(targetButtons);
-      this.targetFeatureEnabled = true;
-      dirty = true;
-    };
-    // if target feature was enabled in the options, start it
-    if(this.targetFeatureEnabled) this.enableTargetMode();
-
-    // TODO: remove
-    this.disableTargetMode = function(){
-      buttons = defaultButtons.slice();
-      this.targetFeatureEnabled = false;
-      state = states.DEFAULT;
-      self.target = null;
-      dirty = true;
-    };
-
-    var drawSolutionPointButton = new Button('\uf040', 'Draw new solution point')
-      , moveSolutionButton = new Button('\uf047', 'Move solution point')
-      , deleteSolutionPointButton = new Button('\uf00d', 'Delete solution point')
-      , deleteSolutionButton = new Button('\uf1f8', 'Delete solution')
-      , solutionButtons = [ deleteSolutionButton,
-                             deleteSolutionPointButton,
-                             moveSolutionButton,
-                             drawSolutionPointButton];
-
-    drawSolutionPointButton.enabled = function(){
-      return (state === states.SOLUTION_DRAW);
-    };
-    drawSolutionPointButton.onClick = function(){
-      state = (state === states.SOLUTION_DRAW)
-                    ? states.DEFAULT
-                    : states.SOLUTION_DRAW;
-      dirty = true;
-    };
-    moveSolutionButton.enabled = function(){
-      return (state === states.SOLUTION_MOVE);
-    };
-    moveSolutionButton.onClick = function(){
-      state = (state === states.SOLUTION_MOVE)
-                    ? states.DEFAULT
-                    : states.SOLUTION_MOVE;
-      dirty = true;
-    };
-    deleteSolutionPointButton.enabled = function(){
-      return (state === states.SOLUTION_POINT_DELETE);
-    };
-    deleteSolutionPointButton.onClick = function(){
-      state = (state === states.SOLUTION_POINT_DELETE)
-                    ? states.DEFAULT
-                    : states.SOLUTION_POINT_DELETE;
-      dirty = true;
-    };
-    deleteSolutionButton.onClick = function(){
-      self.solution = null;
-      dirty = true;
-    };
-
-    var exposeSolutionOption = (typeof options.exposeSolution === 'boolean') ? options.exposeSolution : false;
-    var solutionMenuVisible = false;// TODO: hide/change
-    if(exposeSolutionOption){// TODO: don't expose anymore
-      this.getSolutionVisible = function(){return solutionVisible;};
-      this.setSolutionVisible = function(value){
-        solutionVisible = value;
-        dirty = true;
-      };
-      this.showSolutionMenu = function(){
-        solutionVisible = true;
-        buttons = defaultButtons.concat(solutionButtons);
-        solutionMenuVisible = true;
-        dirty = true;
-      };
-      this.hideSolutionMenu = function(){
-        solutionVisible = false;
-        buttons = defaultButtons.slice();
-        solutionMenuVisible = false;
-        dirty = true;
-      };
-    }
-
-    ////
-    //// Input handling
-    ////
-
-    // dragging image or ui-elements
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mouseup', onMouseUp);
-
-    // zooming
-    canvas.addEventListener('DOMMouseScroll', onMouseWheel);
-    canvas.addEventListener('mousewheel', onMouseWheel);
-
-    // moving
-    canvas.addEventListener('mousemove', onMouseMove);
-
-    // setting target
-    canvas.addEventListener('click', onMouseClick);
 
     function render(){
       // check if dirty
@@ -255,7 +184,7 @@
       }
 
       // draw target
-      if(self.target !== null){
+      if(targetVisible && self.target !== null){
         drawTarget(ctx);
       }
     }
@@ -507,7 +436,7 @@
       }
 
       // draw handles
-      if(solutionMenuVisible){ // TODO: change flag
+      if(solutionEditable){
         this.getVertices().forEach(function(handle){
           handle.drawHandle(ctx);
         });
@@ -535,36 +464,6 @@
       return inBounds;
     };
 
-    this.exportSolution = function(){
-      // return empty array if solution is empty
-      if(this.solution === null) return [];
-
-      var exportedSolution = [];
-      var vertices = this.solution.getVertices();
-      for(var i = 0; i < vertices.length; i++){
-        exportedSolution.push({
-          x: vertices[i].position.x,
-          y: vertices[i].position.y
-        });
-      }
-      return exportedSolution;
-    };
-
-    this.importSolution = function(importedSolution){
-      var initialVertex = new Vertex(importedSolution[0].x, importedSolution[0].y)
-        , current = initialVertex
-        , next = null;
-
-      for(var i = 1; i < importedSolution.length; i++){
-        next = new Vertex(importedSolution[i].x, importedSolution[i].y);
-        current.next = next;
-        current = next;
-      }
-
-      this.solution = new Polygon(initialVertex);
-      dirty = true;
-    };
-
     function drawTarget(ctx){
       // preserve context
       ctx.save();
@@ -575,14 +474,18 @@
       ctx.translate(transalation.x, transalation.y);
       ctx.scale(shapeScale * scale, shapeScale * scale);
       ctx.lineWidth = 2;
-      var color = '#ff0000'; // red
+      var color = '#0000ff'; // blue
 
-      // TODO make this behaviour optional
       // change color if target is within solution
       if(solutionVisible // show solution flag enabled?
-         && self.solution !== null // is there a solution?
-         && self.solution.isWithinBounds(self.target.x, self.target.y)) // os the target within the solution?
-        color = '#00ff00'; //green
+         && self.solution !== null){ // is there a solution?
+        // is the target within the solution?
+        if(self.solution.isWithinBounds(self.target.x, self.target.y)){
+          color = '#00ff00'; //green
+        } else {
+          color = '#ff0000'; // red
+        }
+      }
 
       ctx.strokeStyle = ctx.fillStyle = color;
 
@@ -802,6 +705,118 @@
       ctx.fillText(icon, x, y);
     }
 
+    function addEventListeners(){
+      // dragging image or ui-elements
+      document.addEventListener('mousedown', onMouseDown);
+      document.addEventListener('mouseup', onMouseUp);
+
+      // zooming
+      canvas.addEventListener('DOMMouseScroll', onMouseWheel);
+      canvas.addEventListener('mousewheel', onMouseWheel);
+
+      // moving
+      canvas.addEventListener('mousemove', onMouseMove);
+
+      // setting target
+      canvas.addEventListener('click', onMouseClick);
+    }
+
+    function removeEventListeners(){
+      // dragging image or ui-elements
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mouseup', onMouseUp);
+
+      // zooming
+      canvas.removeEventListener('DOMMouseScroll', onMouseWheel);
+      canvas.removeEventListener('mousewheel', onMouseWheel);
+
+      // moving
+      canvas.removeEventListener('mousemove', onMouseMove);
+
+      // setting target
+      canvas.removeEventListener('click', onMouseClick);
+    }
+
+    this.dispose = function(){
+      removeEventListeners();
+      clearInterval(tickInterval);
+    };
+
+    function initialize(){
+      //// init image
+      self.image.addEventListener('load', onImageLoad, false);
+      self.image.src = imageUrl;
+
+      //// init solution
+      if(Object.prototype.toString.call(options.solution) === '[object Array]')
+        self.importSolution(options.solution);
+
+      //// init buttons
+      // apply zooming functions to their buttons
+      zoomOutButton.onClick = function(){ self.zoomOut(); };
+      zoomInButton.onClick = function(){ self.zoomIn(); };
+      // if target feature enable, show their buttons
+      if(targetEditable){
+        // delete target button
+        deleteTargetButton.onClick = function(){
+          self.target = null;
+          dirty = true;
+        };
+        // add target button
+        addTargetButton.enabled = function(){
+          return (state === states.TARGET_DRAW);
+        };
+        // onclick: toggle draw target mode
+        addTargetButton.onClick = function(){
+          state = (state === states.TARGET_DRAW) ? states.DEFAULT : states.TARGET_DRAW;
+          dirty = true;
+        };
+        // merge them with the other buttons
+        buttons = defaultButtons.concat(targetButtons);
+      }
+      // if solution feature enable, show their buttons
+      if(solutionEditable){
+        drawSolutionPointButton.enabled = function(){
+          return (state === states.SOLUTION_DRAW);
+        };
+        drawSolutionPointButton.onClick = function(){
+          state = (state === states.SOLUTION_DRAW)
+                        ? states.DEFAULT
+                        : states.SOLUTION_DRAW;
+          dirty = true;
+        };
+        moveSolutionButton.enabled = function(){
+          return (state === states.SOLUTION_MOVE);
+        };
+        moveSolutionButton.onClick = function(){
+          state = (state === states.SOLUTION_MOVE)
+                        ? states.DEFAULT
+                        : states.SOLUTION_MOVE;
+          dirty = true;
+        };
+        deleteSolutionPointButton.enabled = function(){
+          return (state === states.SOLUTION_POINT_DELETE);
+        };
+        deleteSolutionPointButton.onClick = function(){
+          state = (state === states.SOLUTION_POINT_DELETE)
+                        ? states.DEFAULT
+                        : states.SOLUTION_POINT_DELETE;
+          dirty = true;
+        };
+        deleteSolutionButton.onClick = function(){
+          self.solution = null;
+          dirty = true;
+        };
+
+        // merge them with the other buttons
+        buttons = defaultButtons.concat(solutionButtons);
+      }
+
+      //// init Input handling
+      addEventListeners();
+    }
+
+    initialize();
   }
 
   window.ImageViewer = ImageViewer;
