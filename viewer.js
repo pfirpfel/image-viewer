@@ -531,8 +531,8 @@
     }
 
     function getUIElements(){
-      // only return the solution vertices handler if in solution drawing mode and there are some already
-      var solutionVertices = (self.solution !== null)
+      // only return the solution vertices handler if in solution edit mode and there are some already
+      var solutionVertices = (self.solution !== null && solutionEditable)
                              ? self.solution.getVertices()
                              : [];
       return buttons.concat(solutionVertices);
