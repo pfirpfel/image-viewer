@@ -469,25 +469,48 @@
       }
     };
 
+    function isLeft(p0, p1, p2){
+      // p0, p1, p2: point objects, like { x: 0, y: 0 }
+      // returns:
+      //          >0 : for p2 left of the line through p0 and p1
+      //          =0 : for p2  on the line
+      //          <0 : for p2  right of the line
+      // see: http://geomalgorithms.com/a01-_area.html
+      return ( (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y));
+    }
+
     Polygon.prototype.isWithinBounds = function(x, y){
       // get all vertices
-      var vertices = this.getVertices();
+      var vertices = this.getVertices()
+
+      // winding number
+        , wn = 0
+
+      // point to check
+        , p = { x: x, y: y };
+
       // if polygon is not closed, the coordinates can't be within bounds
       if(vertices[vertices.length - 1].next !== vertices[0]) return false;
 
-      // algorithm from: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-      var i = 0
-        , j = vertices.length - 1
-        , inBounds = false;
-      for(; i < vertices.length; j = i++){
-        if(((vertices[i].position.y > y) !== (vertices[j].position.y > y)) &&
-           (x < (vertices[j].position.x - vertices[i].position.x) * (y - vertices[i].position.y)
-              / (vertices[j].position.y - vertices[i].position.y) + vertices[i].position.x)
-        ){
-           inBounds = !inBounds;
+      // algorithm see: http://geomalgorithms.com/a03-_inclusion.html
+      for(var i = 0; i + 1 < vertices.length; i++){ // edge from vertices[i] to vertices[i+1]
+        if(vertices[i].position.y <= p.y){ // start y <= p.y
+          if(vertices[i + 1].position.y > p.y){ // an upward crossing
+            if(isLeft(vertices[i].position, vertices[i + 1].position, p) > 0){ // P left of edge
+              wn++; // have a valid up intersect
+            }
+          }
+        } else { // start y > p.y
+          if(vertices[i + 1].position.y <= p.y){ // a downward crossing
+            if(isLeft(vertices[i].position, vertices[i + 1].position, p) < 0){ // P right of  edge
+              wn--; // have a valid down intersect
+            }
+          }
         }
       }
-      return inBounds;
+
+      // wn == 0 only when p is outside
+      return wn !== 0;
     };
 
     Polygon.prototype.close = function(){
