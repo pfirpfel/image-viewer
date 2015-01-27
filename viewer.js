@@ -24,6 +24,9 @@
     // dirty state
       , dirty = true
 
+    // flag to stop render loop
+      , stopRendering = false
+
     // image scale
       , scale = 1
       , scaleStep = 0.1
@@ -68,10 +71,6 @@
 
       // current tool tip (used to track change of tool tip)
       , currentTooltip = null
-
-    // render loop
-      , FPS = 30
-      , tickInterval = null
 
     // Input handling
       // active element (mainly) used for dragging
@@ -153,11 +152,8 @@
       // image changed
       dirty = true;
 
-      // stop old render loop (if existed)
-      if(tickInterval) clearInterval(tickInterval);
-
       // start new render loop
-      tickInterval = setInterval(function(){ render(); }, 1000 / FPS);
+      render();
     }
 
     this.zoomIn = function(){
@@ -171,37 +167,39 @@
     };
 
     function render(){
-      // check if dirty
-      if(!dirty) return;
-      dirty = false;
+      // only re-render if dirty
+      if(dirty){
+        dirty = false;
 
-      var ctx = context;
-      // clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var ctx = context;
+        // clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // draw image (transformed and scaled)
-      ctx.save();
-      var translateX = canvas.width / 2 - centre.x * scale
-        , translateY = canvas.height / 2 - centre.y * scale;
+        // draw image (transformed and scaled)
+        ctx.save();
+        var translateX = canvas.width / 2 - centre.x * scale
+          , translateY = canvas.height / 2 - centre.y * scale;
 
-      ctx.translate(translateX, translateY);
-      ctx.scale(scale, scale);
+        ctx.translate(translateX, translateY);
+        ctx.scale(scale, scale);
 
-      ctx.drawImage(self.image, 0,0);
+        ctx.drawImage(self.image, 0,0);
 
-      ctx.restore();
+        ctx.restore();
 
-      // draw buttons
-      drawButtons(ctx);
+        // draw buttons
+        drawButtons(ctx);
 
-      if(solutionVisible && self.solution !== null){
-        self.solution.draw(ctx);
+        if(solutionVisible && self.solution !== null){
+          self.solution.draw(ctx);
+        }
+
+        // draw target
+        if(targetVisible && self.target !== null){
+          drawTarget(ctx);
+        }
       }
-
-      // draw target
-      if(targetVisible && self.target !== null){
-        drawTarget(ctx);
-      }
+      if(!stopRendering) window.requestAnimationFrame(render);
     }
 
     function drawButtons(ctx){
@@ -754,7 +752,7 @@
 
     this.dispose = function(){
       removeEventListeners();
-      clearInterval(tickInterval);
+      stopRendering = true;
     };
 
     this.refresh = function(){
