@@ -44,6 +44,9 @@
         }
       , state = states.DEFAULT
 
+    // keeping track of event handling
+      , events = []
+
     //// buttons
 
       // default buttons that are always visible
@@ -718,40 +721,38 @@
       ctx.fillText(icon, x, y);
     }
 
-    function addEventListeners(){
-      // dragging image or ui-elements
-      document.addEventListener('mousedown', onMouseDown);
-      document.addEventListener('mouseup', onMouseUp);
-
-      // zooming
-      canvas.addEventListener('DOMMouseScroll', onMouseWheel);
-      canvas.addEventListener('mousewheel', onMouseWheel);
-
-      // moving
-      canvas.addEventListener('mousemove', onMouseMove);
-
-      // setting target
-      canvas.addEventListener('click', onMouseClick);
+    function addEventListener(eventTarget, eventType, listener){
+      eventTarget.addEventListener(eventType, listener);
+      events.push({eventTarget: eventTarget, eventType: eventType, listener: listener});
     }
 
-    function removeEventListeners(){
+    function removeAllEventListeners(){
+      var _i, _events = events.slice(), _current;
+      for(_i = 0; _i < _events.length; _i++){
+        _current = _events[_i];
+        _current.eventTarget.removeEventListener(_current.eventType, _current.listener);
+      }
+      events = [];
+    }
+
+    function addEventListeners(){
       // dragging image or ui-elements
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('mouseup', onMouseUp);
+      addEventListener(document, 'mousedown', onMouseDown);
+      addEventListener(document, 'mouseup', onMouseUp);
 
       // zooming
-      canvas.removeEventListener('DOMMouseScroll', onMouseWheel);
-      canvas.removeEventListener('mousewheel', onMouseWheel);
+      addEventListener(canvas, 'DOMMouseScroll', onMouseWheel);
+      addEventListener(canvas, 'mousewheel', onMouseWheel);
 
       // moving
-      canvas.removeEventListener('mousemove', onMouseMove);
+      addEventListener(canvas, 'mousemove', onMouseMove);
 
       // setting target
-      canvas.removeEventListener('click', onMouseClick);
+      addEventListener(canvas, 'click', onMouseClick);
     }
 
     this.dispose = function(){
-      removeEventListeners();
+      removeAllEventListeners();
       stopRendering = true;
     };
 
