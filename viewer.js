@@ -60,7 +60,7 @@
       , targetButtons = [deleteTargetButton, addTargetButton]
 
       // buttons for the solution feature
-      , drawSolutionPointButton = new Button('\uf040', 'Draw new solution point')
+      , drawSolutionPointButton = new Button('\uf040', 'Draw new solution point (close with shift-click)')
       , moveSolutionButton = new Button('\uf047', 'Move solution point')
       , deleteSolutionPointButton = new Button('\uf00d', 'Delete solution point')
       , deleteSolutionButton = new Button('\uf1f8', 'Delete solution')
@@ -318,10 +318,20 @@
 
       this.handleWidth = 12;
 
-      this.onClick = function(){
+      this.onClick = function(evt){
         if(state === states.SOLUTION_POINT_DELETE){
           self.solution.deleteVertex(vertexInstance);
           dirty = true;
+          return;
+        }
+        if(state === states.SOLUTION_DRAW
+        && evt.shiftKey
+        && self.solution !== null
+        && vertexInstance.equals(self.solution.initialVertex)
+        ){
+          self.solution.close();
+          state = states.DEFAULT;
+          return;
         }
       };
 
@@ -480,6 +490,28 @@
       return inBounds;
     };
 
+    Polygon.prototype.close = function(){
+      if(this.getVertices().length > 2){
+        this.addVertex(this.initialVertex);
+      }
+    };
+
+    function getTargetColor(){
+      var color = '#0000ff'; // Default: blue
+
+      // change color if target is within solution
+      if(solutionVisible){ // show solution flag enabled?
+        // is the target within the solution?
+        if(self.solution !== null
+        && self.solution.isWithinBounds(self.target.x, self.target.y)){
+          color = '#00ff00'; //green
+        } else {
+          color = '#ff0000'; // red
+        }
+      }
+      return color;
+    }
+
     function drawTarget(ctx){
       // preserve context
       ctx.save();
@@ -489,40 +521,10 @@
 
       ctx.translate(transalation.x, transalation.y);
       ctx.scale(shapeScale * scale, shapeScale * scale);
-      ctx.lineWidth = 2;
-      var color = '#0000ff'; // blue
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 5;
 
-      // change color if target is within solution
-      if(solutionVisible // show solution flag enabled?
-         && self.solution !== null){ // is there a solution?
-        // is the target within the solution?
-        if(self.solution.isWithinBounds(self.target.x, self.target.y)){
-          color = '#00ff00'; //green
-        } else {
-          color = '#ff0000'; // red
-        }
-      }
-
-      ctx.strokeStyle = ctx.fillStyle = color;
-
-      // flag
-      ctx.beginPath();
-      ctx.moveTo(0, -20);
-      ctx.lineTo(15, -15);
-      ctx.lineTo(15, -25);
-      ctx.lineTo(0, -30);
-      ctx.lineTo(0, 0);
-      ctx.stroke();
-
-      // bulls-eye
-      // inner circle
-      ctx.beginPath();
-      ctx.arc(0, 0, 5, 0, 2 * Math.PI, false);
-      ctx.stroke();
-      // outer circle
-      ctx.beginPath();
-      ctx.arc(0, 0, 10, 0, 2 * Math.PI, false);
-      ctx.stroke();
+      drawAwesomeIcon(ctx, '\uf05b', getTargetColor(), 0, 0, 50);
 
       // restore context
       ctx.restore();
@@ -584,9 +586,9 @@
           }
           if(state === states.SOLUTION_DRAW){
             if(evt.shiftKey){
-              // close polygon if it has more than 2 vertices
-              if(self.solution !== null && self.solution.getVertices().length > 2){
-                self.solution.addVertex(self.solution.initialVertex);
+              // close polygon
+              if(self.solution !== null){
+                self.solution.close();
                 state = states.DEFAULT;
               }
             } else {
@@ -707,15 +709,15 @@
       ctx.restore();
     };
 
-    function drawAwesomeIcon(ctx, icon, color, centreX, centreY, buttonRadius){
+    function drawAwesomeIcon(ctx, icon, color, centreX, centreY, size){
       // font settings
-      ctx.font = buttonRadius + "px FontAwesome";
+      ctx.font = size + "px FontAwesome";
       ctx.fillStyle = color;
 
       // calculate position
       var textSize = ctx.measureText(icon)
         , x = centreX - textSize.width / 2
-        , y = centreY + buttonRadius * 0.7 / 2;
+        , y = centreY + size * 0.7 / 2;
 
       // draw it
       ctx.fillText(icon, x, y);
