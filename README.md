@@ -128,7 +128,7 @@ var myImageViewer = new ImageViewer('viewerCanvas', 'image.png', { solution: [{ 
 ```
 The solution is an array of point objects with x/y-coordinates.
 
-### Solution
+### Answer
 #### Accessing answer position
 ```javascript
 var position = myImageViewer.answer;
@@ -150,5 +150,5 @@ myImageViewer.refresh();
 
 2. On initialization
 ```javascript
-var myImageViewer = new ImageViewer('viewerCanvas', 'image.png', { asnwer: { x: 0, y: 0 } });
+var myImageViewer = new ImageViewer('viewerCanvas', 'image.png', { answer: { x: 0, y: 0 } });
 ```
