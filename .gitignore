@@ -3,4 +3,5 @@ lib/*
 !lib/fontawesome
 lib/fontawesome/*
 !lib/fontawesome/fonts
+dist
 node_modules

@@ -3,22 +3,16 @@
   <head>
     <meta charset="UTF-8">
     <title>Image Viewer</title>
-    <script src="viewer.js"></script>
+    <script src="lib/webfontloader/webfontloader.js"></script>
+    <script src="dist/viewer.js"></script>
     <link rel="stylesheet" href="style.css" />
-    <style>
-    @font-face {
-      font-family: 'FontAwesome';
-      src: url('lib/fontawesome/fonts/fontawesome-webfont.eot?v=4.2.0');
-      src: url('lib/fontawesome/fonts/fontawesome-webfont.eot?#iefix&v=4.2.0') format('embedded-opentype'), url('lib/fontawesome/fonts/fontawesome-webfont.woff?v=4.2.0') format('woff'), url('lib/fontawesome/fonts/fontawesome-webfont.ttf?v=4.2.0') format('truetype'), url('lib/fontawesome/fonts/fontawesome-webfont.svg?v=4.2.0#fontawesomeregular') format('svg');
-      font-weight: normal;
-      font-style: normal;
-    }
-    </style>
   </head>
   <body>
     <h1>Image Viewer</h1>
-    <button onclick="javascript:toggleTargetMode();">toggle target mode</button>
-    <button onclick="javascript:toggleSolution();">toggle solution</button><br>
+    <button onclick="javascript:toDefault();">Default mode</button>
+    <button onclick="javascript:toEditSolution();">Step 1: Create solution</button>
+    <button onclick="javascript:toEditTarget();">Step 2: Give answer</button>
+    <button onclick="javascript:toShowSolution();">Step 3: Check answer</button><br>
     <canvas id="viewerCanvas" width="800" height="500" style="border: 1px solid black;"></canvas>
     <p>
     Select picture:
@@ -31,37 +25,69 @@
     <span id="forkongithub"><a href="https://github.com/pfirpfel/image-viewer">Fork me on GitHub</a></span>
     <script>
       // initialize image viewer
-      var myImageViewer = new ImageViewer('viewerCanvas', 'example-assets/target.png', { target: false, exposeSolution: true });
+      var imageSrc = 'example-assets/target.png'
+        , canvasId = 'viewerCanvas'
+        , myImageViewer = new ImageViewer(canvasId, imageSrc)
+        , solution = []
+        , target = null;
+
+      WebFont.load({
+        custom: {
+          families: ['FontAwesome'],
+          urls: ['css/fonts.css'],
+          testStrings: {
+            // Fontawesome does not contain 'normal' characters,
+            // therefore we need to test 'special ones'
+            'FontAwesome': '\uf010\uf00e\uf1f8\uf024\uf040\uf047\uf00d\uf1f8'
+          }
+        },
+        fontactive: function() {
+          myImageViewer.refresh();
+        }
+      });
 
       // methods to interact with viewer
+      function saveState(){
+        target = myImageViewer.target;
+        solution = myImageViewer.exportSolution();
+      }
+
+      function toDefault(){
+        if(myImageViewer !== null){
+          myImageViewer.dispose();
+        }
+        myImageViewer = new ImageViewer(canvasId, imageSrc);
+        solution = [];
+        target = null;
+      }
+
+      function toEditTarget(){
+        reloadImageViewer('editTarget');
+      }
+
+      function toEditSolution(){
+        reloadImageViewer('editSolution');
+      }
+
+      function toShowSolution(){
+        reloadImageViewer('showSolution');
+      }
+
+      function reloadImageViewer(mode){
+        if(myImageViewer !== null){
+          saveState();
+          myImageViewer.dispose();
+        }
+        var options = { mode: mode,
+                        solution: solution,
+                        target: target };
+        myImageViewer = new ImageViewer(canvasId, imageSrc, options);
+      }
 
       // change the image
       function setImage(newSrc){
+        imageSrc = newSrc;
         myImageViewer.image.src = newSrc;
-      }
-
-      // enable/disable target mode
-      function toggleTargetMode(){
-        if(myImageViewer.targetFeatureEnabled){
-          myImageViewer.disableTargetMode();
-        } else {
-          myImageViewer.enableTargetMode();
-        }
-      }
-
-      function toggleSolution(){
-        if(myImageViewer.showSolutionMenu){
-          if(myImageViewer.getSolutionVisible()){
-            myImageViewer.hideSolutionMenu();
-          } else{
-            myImageViewer.showSolutionMenu();
-          }
-        }
-      }
-
-      function deleteSolution(){
-        myImageViewer.solutionPolygon = null;
-        myImageViewer.dirty = true;
       }
     </script>
   </body>

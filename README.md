@@ -38,11 +38,16 @@ Parameters:
 - **canvasId**: id of the canvas element in the HTML DOM
 - **imageUrl**: URL of the image to load (can be relative or absolute)
 - **options**: object with settings
-  - target (boolean): whether target mode is enabled (default: false)
+  - mode: string (other than default viewer-only mode)
+    - 'editTarget'   : displays target and target related buttons
+    - 'editSolution' : displays solution and solution related buttons
+    - 'showSolution' : displays target and solution
+  - target: position-object (like ```{ x: 0; y: 0; }```); position of target inside the image
+  - solution: array of positions (like ```[{ x: 0; y: 0; }, { x: 1; y: 1; }]```); the positions represent vertices which make up the solution polygon
 
 Example:
 ```javascript
-var myImageViewer = new ImageViewer('viewerCanvas', 'image.png', { target: true });
+var myImageViewer = new ImageViewer('viewerCanvas', 'image.png', { target: { x: 0; y: 0; } });
 ```
 
 ### Changing the image
@@ -61,12 +66,3 @@ target is an object like:
 
 ```javascript
 { x: 0, y: 0 }
-```
-#### Enabling
-```javascript
-myImageViewer.enableTargetMode();
-```
-#### Disabling
-```javascript
-myImageViewer.disableTargetMode();
-```
