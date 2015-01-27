@@ -7,11 +7,11 @@
     // options-object
     // possible start options:
     // * mode:     string (other than default viewer-only mode)
-    //             - 'editTarget'   : displays target and target related buttons
+    //             - 'editAnswer'   : displays answer and answer related buttons
     //             - 'editSolution' : displays solution and solution related buttons
-    //             - 'showSolution' : displays target and solution
-    // * target:   position-object, like { x: 0; y: 0; }
-    //             position of target inside the image
+    //             - 'showSolution' : displays answer and solution
+    // * answer:   position-object, like { x: 0; y: 0; }
+    //             position of answer inside the image
     // * solution: array of positions, like [{ x: 0; y: 0; }, { x: 1; y: 1; }]
     //             the positions represent vertices which make up the solution
     //             polygon
@@ -37,7 +37,7 @@
     // viewer states
       , states = {
           DEFAULT: 0,
-          TARGET_DRAW: 1,
+          ANSWER_DRAW: 1,
           SOLUTION_DRAW: 2,
           SOLUTION_MOVE: 3,
           SOLUTION_POINT_DELETE: 4
@@ -54,10 +54,10 @@
       , zoomInButton = new Button('\uf00e', 'Zoom in')
       , defaultButtons = [zoomOutButton, zoomInButton]
 
-      // buttons for target feature
-      , deleteTargetButton = new Button('\uf1f8', 'Delete target')
-      , addTargetButton = new Button('\uf024', 'Set target')
-      , targetButtons = [deleteTargetButton, addTargetButton]
+      // buttons for answer feature
+      , deleteAnswerButton = new Button('\uf1f8', 'Delete answer')
+      , addAnswerButton = new Button('\uf024', 'Set answer')
+      , answerButtons = [deleteAnswerButton, addAnswerButton]
 
       // buttons for the solution feature
       , drawSolutionPointButton = new Button('\uf040', 'Draw new solution point (close with shift-click)')
@@ -83,9 +83,9 @@
       // keep last mouse position to calculate drag distance
       , mouseLastPos = null
 
-    // target feature
-      , targetEditable = (typeof options.mode === 'string' && options.mode === 'editTarget')
-      , targetVisible = targetEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
+    // answer feature
+      , answerEditable = (typeof options.mode === 'string' && options.mode === 'editAnswer')
+      , answerVisible = answerEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
 
     // solution feature
       , solutionEditable = (typeof options.mode === 'string' && options.mode === 'editSolution')
@@ -94,8 +94,8 @@
     // image
     this.image = new Image();
 
-    // target
-    this.target = (typeof options.target === 'object' && options.target !== null) ? options.target : null;
+    // answer
+    this.answer = (typeof options.answer === 'object' && options.answer !== null) ? options.answer : null;
 
     // solution
     this.solution = null;
@@ -197,9 +197,9 @@
           self.solution.draw(ctx);
         }
 
-        // draw target
-        if(targetVisible && self.target !== null){
-          drawTarget(ctx);
+        // draw answer
+        if(answerVisible && self.answer !== null){
+          drawAnswer(ctx);
         }
       }
       if(!stopRendering) window.requestAnimationFrame(render);
@@ -519,14 +519,14 @@
       }
     };
 
-    function getTargetColor(){
+    function getAnswerColor(){
       var color = '#0000ff'; // Default: blue
 
-      // change color if target is within solution
+      // change color if answer is within solution
       if(solutionVisible){ // show solution flag enabled?
-        // is the target within the solution?
+        // is the answer within the solution?
         if(self.solution !== null
-        && self.solution.isWithinBounds(self.target.x, self.target.y)){
+        && self.solution.isWithinBounds(self.answer.x, self.answer.y)){
           color = '#00ff00'; //green
         } else {
           color = '#ff0000'; // red
@@ -535,19 +535,19 @@
       return color;
     }
 
-    function drawTarget(ctx){
+    function drawAnswer(ctx){
       // preserve context
       ctx.save();
 
       var shapeScale = 1.5
-        , transalation = convertToCanvasTranslation(self.target);
+        , transalation = convertToCanvasTranslation(self.answer);
 
       ctx.translate(transalation.x, transalation.y);
       ctx.scale(shapeScale * scale, shapeScale * scale);
       ctx.shadowColor = '#ffffff';
       ctx.shadowBlur = 5;
 
-      drawAwesomeIcon(ctx, '\uf05b', getTargetColor(), 0, 0, 50);
+      drawAwesomeIcon(ctx, '\uf05b', getAnswerColor(), 0, 0, 50);
 
       // restore context
       ctx.restore();
@@ -603,8 +603,8 @@
                 x: evt.clientX - rect.left,
                 y: evt.clientY - rect.top
               };
-          if(state === states.TARGET_DRAW){
-            self.target = convertToImagePosition(clickPos);
+          if(state === states.ANSWER_DRAW){
+            self.answer = convertToImagePosition(clickPos);
             dirty = true;
           }
           if(state === states.SOLUTION_DRAW){
@@ -772,7 +772,7 @@
       // moving
       addEventListener(canvas, 'mousemove', onMouseMove);
 
-      // setting target
+      // setting answer
       addEventListener(canvas, 'click', onMouseClick);
     }
 
@@ -798,24 +798,24 @@
       // apply zooming functions to their buttons
       zoomOutButton.onClick = function(){ self.zoomOut(); };
       zoomInButton.onClick = function(){ self.zoomIn(); };
-      // if target feature enable, show their buttons
-      if(targetEditable){
-        // delete target button
-        deleteTargetButton.onClick = function(){
-          self.target = null;
+      // if answer feature enable, show their buttons
+      if(answerEditable){
+        // delete answer button
+        deleteAnswerButton.onClick = function(){
+          self.answer = null;
           dirty = true;
         };
-        // add target button
-        addTargetButton.enabled = function(){
-          return (state === states.TARGET_DRAW);
+        // add answer button
+        addAnswerButton.enabled = function(){
+          return (state === states.ANSWER_DRAW);
         };
-        // onclick: toggle draw target mode
-        addTargetButton.onClick = function(){
-          state = (state === states.TARGET_DRAW) ? states.DEFAULT : states.TARGET_DRAW;
+        // onclick: toggle draw answer mode
+        addAnswerButton.onClick = function(){
+          state = (state === states.ANSWER_DRAW) ? states.DEFAULT : states.ANSWER_DRAW;
           dirty = true;
         };
         // merge them with the other buttons
-        buttons = defaultButtons.concat(targetButtons);
+        buttons = defaultButtons.concat(answerButtons);
       }
       // if solution feature enable, show their buttons
       if(solutionEditable){

@@ -10,7 +10,7 @@
     <h1>Image Viewer</h1>
     <button onclick="javascript:toDefault();">Default mode</button>
     <button onclick="javascript:toEditSolution();">Step 1: Create solution</button>
-    <button onclick="javascript:toEditTarget();">Step 2: Give answer</button>
+    <button onclick="javascript:toEditAnswer();">Step 2: Give answer</button>
     <button onclick="javascript:toShowSolution();">Step 3: Check answer</button><br>
     <canvas id="viewerCanvas" width="800" height="500" style="border: 1px solid black;"></canvas>
     <p>
@@ -26,7 +26,7 @@
         , canvasId = 'viewerCanvas'
         , myImageViewer = new ImageViewer(canvasId, imageSrc)
         , solution = []
-        , target = null;
+        , answer = null;
 
       WebFont.load({
         custom: {
@@ -45,7 +45,7 @@
 
       // methods to interact with viewer
       function saveState(){
-        target = myImageViewer.target;
+        answer = myImageViewer.answer;
         solution = myImageViewer.exportSolution();
       }
 
@@ -55,11 +55,11 @@
         }
         myImageViewer = new ImageViewer(canvasId, imageSrc);
         solution = [];
-        target = null;
+        answer = null;
       }
 
-      function toEditTarget(){
-        reloadImageViewer('editTarget');
+      function toEditAnswer(){
+        reloadImageViewer('editAnswer');
       }
 
       function toEditSolution(){
@@ -77,7 +77,7 @@
         }
         var options = { mode: mode,
                         solution: solution,
-                        target: target };
+                        answer: answer };
         myImageViewer = new ImageViewer(canvasId, imageSrc, options);
       }
 
