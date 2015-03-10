@@ -325,7 +325,6 @@
           return;
         }
         if(state === states.SOLUTION_DRAW
-        && evt.shiftKey
         && self.solution !== null
         && vertexInstance.equals(self.solution.initialVertex)
         ){
