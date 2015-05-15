@@ -130,7 +130,7 @@ The solution is an array of point objects with x/y-coordinates.
 
 #### On Change Event
 On every change on the solution (while in editSolution mode), the onSolutionChange event gets called.
-
+The solution object given to the event is the output of exportSolution().
 
 ```javascript
 myImageViewer.onSolutionChange = function(solution){
