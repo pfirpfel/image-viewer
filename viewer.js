@@ -140,6 +140,9 @@
       dirty = true;
     };
 
+    // gets called if the solution changes
+    this.onSolutionChange = function(solution){};
+
     function onImageLoad(){
       // set scale to use as much space inside the canvas as possible
       if(((canvas.height / self.image.height) * self.image.width) <= canvas.width){
@@ -321,6 +324,7 @@
       this.onClick = function(evt){
         if(state === states.SOLUTION_POINT_DELETE){
           self.solution.deleteVertex(vertexInstance);
+          self.onSolutionChange(self.exportSolution());
           dirty = true;
           return;
         }
@@ -330,6 +334,7 @@
         ){
           self.solution.close();
           state = states.DEFAULT;
+          self.onSolutionChange(self.exportSolution());
           return;
         }
       };
@@ -612,6 +617,7 @@
               if(self.solution !== null){
                 self.solution.close();
                 state = states.DEFAULT;
+                self.onSolutionChange(self.exportSolution());
               }
             } else {
               var newVertexPosition = convertToImagePosition(clickPos)
@@ -619,6 +625,7 @@
               if(self.solution === null) self.solution = new Polygon();
               self.solution.addVertex(newVertex);
             }
+            self.onSolutionChange(self.exportSolution());
             dirty = true;
           }
         }
@@ -652,6 +659,7 @@
           activeMoveElement.x += deltaX / scale;
           activeMoveElement.y += deltaY / scale;
         }
+        self.onSolutionChange(self.exportSolution());
         dirty = true;
       } else {
         var activeElement = getUIElement(evt)
@@ -847,6 +855,7 @@
         };
         deleteSolutionButton.onClick = function(){
           self.solution = null;
+          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
 
