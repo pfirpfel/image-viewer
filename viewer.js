@@ -140,6 +140,9 @@
       dirty = true;
     };
 
+    // gets called if the solution changes
+    this.onSolutionChange = function(solution){};
+
     function onImageLoad(){
       // set scale to use as much space inside the canvas as possible
       if(((canvas.height / self.image.height) * self.image.width) <= canvas.width){
@@ -825,6 +828,7 @@
           state = (state === states.SOLUTION_DRAW)
                         ? states.DEFAULT
                         : states.SOLUTION_DRAW;
+          self.onSolutionChange(self.solution);
           dirty = true;
         };
         moveSolutionButton.enabled = function(){
@@ -834,6 +838,7 @@
           state = (state === states.SOLUTION_MOVE)
                         ? states.DEFAULT
                         : states.SOLUTION_MOVE;
+          self.onSolutionChange(self.solution);
           dirty = true;
         };
         deleteSolutionPointButton.enabled = function(){
@@ -843,10 +848,12 @@
           state = (state === states.SOLUTION_POINT_DELETE)
                         ? states.DEFAULT
                         : states.SOLUTION_POINT_DELETE;
+          self.onSolutionChange(self.solution);
           dirty = true;
         };
         deleteSolutionButton.onClick = function(){
           self.solution = null;
+          self.onSolutionChange(self.solution);
           dirty = true;
         };
 
