@@ -324,6 +324,7 @@
       this.onClick = function(evt){
         if(state === states.SOLUTION_POINT_DELETE){
           self.solution.deleteVertex(vertexInstance);
+          self.onSolutionChange(self.exportSolution());
           dirty = true;
           return;
         }
@@ -333,6 +334,7 @@
         ){
           self.solution.close();
           state = states.DEFAULT;
+          self.onSolutionChange(self.exportSolution());
           return;
         }
       };
@@ -615,6 +617,7 @@
               if(self.solution !== null){
                 self.solution.close();
                 state = states.DEFAULT;
+                self.onSolutionChange(self.exportSolution());
               }
             } else {
               var newVertexPosition = convertToImagePosition(clickPos)
@@ -622,6 +625,7 @@
               if(self.solution === null) self.solution = new Polygon();
               self.solution.addVertex(newVertex);
             }
+            self.onSolutionChange(self.exportSolution());
             dirty = true;
           }
         }
@@ -655,6 +659,7 @@
           activeMoveElement.x += deltaX / scale;
           activeMoveElement.y += deltaY / scale;
         }
+        self.onSolutionChange(self.exportSolution());
         dirty = true;
       } else {
         var activeElement = getUIElement(evt)
@@ -828,7 +833,6 @@
           state = (state === states.SOLUTION_DRAW)
                         ? states.DEFAULT
                         : states.SOLUTION_DRAW;
-          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
         moveSolutionButton.enabled = function(){
@@ -838,7 +842,6 @@
           state = (state === states.SOLUTION_MOVE)
                         ? states.DEFAULT
                         : states.SOLUTION_MOVE;
-          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
         deleteSolutionPointButton.enabled = function(){
@@ -848,7 +851,6 @@
           state = (state === states.SOLUTION_POINT_DELETE)
                         ? states.DEFAULT
                         : states.SOLUTION_POINT_DELETE;
-          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
         deleteSolutionButton.onClick = function(){
