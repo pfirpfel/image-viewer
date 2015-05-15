@@ -828,7 +828,7 @@
           state = (state === states.SOLUTION_DRAW)
                         ? states.DEFAULT
                         : states.SOLUTION_DRAW;
-          self.onSolutionChange(self.solution);
+          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
         moveSolutionButton.enabled = function(){
@@ -838,7 +838,7 @@
           state = (state === states.SOLUTION_MOVE)
                         ? states.DEFAULT
                         : states.SOLUTION_MOVE;
-          self.onSolutionChange(self.solution);
+          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
         deleteSolutionPointButton.enabled = function(){
@@ -848,12 +848,12 @@
           state = (state === states.SOLUTION_POINT_DELETE)
                         ? states.DEFAULT
                         : states.SOLUTION_POINT_DELETE;
-          self.onSolutionChange(self.solution);
+          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
         deleteSolutionButton.onClick = function(){
           self.solution = null;
-          self.onSolutionChange(self.solution);
+          self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
 
