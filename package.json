@@ -1,6 +1,6 @@
 {
   "name": "image-viewer",
-  "version": "0.2.0",
+  "version": "0.3.2",
   "description": "HTML5/canvas-based Image Viewer",
   "main": "viewer.js",
   "dependencies": {},
