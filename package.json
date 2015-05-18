@@ -1,8 +1,9 @@
 {
   "name": "image-viewer",
-  "version": "0.3.2",
-  "description": "HTML5/canvas-based Image Viewer",
-  "main": "viewer.js",
+  "version": "0.3.3",
+  "description": "HTML5/canvas-based Image Viewer with quiz mode",
+  "main": "dist/viewer.js",
+  "files": [ "dist" ],
   "dependencies": {},
   "devDependencies": {
     "grunt": "^0.4.5",
