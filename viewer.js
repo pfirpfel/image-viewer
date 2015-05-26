@@ -100,34 +100,16 @@
     // solution
     this.solution = null;
 
-    this.exportSolution = function(){
-      // return empty array if solution is empty
-      if(this.solution === null) return [];
-
-      var exportedSolution = [];
-      var vertices = this.solution.getVertices();
-      //if closed path, add start point at the end again
-      if(vertices[vertices.length - 1].next === vertices[0]) vertices.push(vertices[0]);
-      for(var i = 0; i < vertices.length; i++){
-        exportedSolution.push({
-          x: vertices[i].position.x,
-          y: vertices[i].position.y
-        });
+    function importPolygon(vertexArray){
+       if(vertexArray.length < 1){
+        return new Polygon();
       }
-      return exportedSolution;
-    };
-
-    this.importSolution = function(importedSolution){
-      if(importedSolution.length < 1){
-        this.solution = null;
-        return;
-      }
-      var initialVertex = new Vertex(importedSolution[0].x, importedSolution[0].y)
+      var initialVertex = new Vertex(vertexArray[0].x, vertexArray[0].y)
         , current = initialVertex
         , next = null;
 
-      for(var i = 1; i < importedSolution.length; i++){
-        next = new Vertex(importedSolution[i].x, importedSolution[i].y);
+      for(var i = 1; i < vertexArray.length; i++){
+        next = new Vertex(vertexArray[i].x, vertexArray[i].y);
         if(next.equals(initialVertex)){
           current.next = initialVertex;
           break;
@@ -136,7 +118,32 @@
         current = next;
       }
 
-      this.solution = new Polygon(initialVertex);
+      return new Polygon(initialVertex);
+    }
+
+    function exportPolygon(polygon){
+      // return empty array if polygon is empty
+      if(typeof polygon === 'undefined' || polygon === null) return [];
+
+      var exportedPolygon = [];
+      var vertices = polygon.getVertices();
+      //if closed path, add start point at the end again
+      if(vertices[vertices.length - 1].next === vertices[0]) vertices.push(vertices[0]);
+      for(var i = 0; i < vertices.length; i++){
+        exportedPolygon.push({
+          x: vertices[i].position.x,
+          y: vertices[i].position.y
+        });
+      }
+      return exportedPolygon;
+    }
+
+    this.exportSolution = function(){
+      return exportPolygon(this.solution);
+    };
+
+    this.importSolution = function(importedSolution){
+      this.solution = (importedSolution.length >= 1) ? importPolygon(importedSolution) : null;
       dirty = true;
     };
 
