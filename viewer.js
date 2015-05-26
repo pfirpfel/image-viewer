@@ -481,6 +481,12 @@
 
     function Polygon(initialVertex){
       this.initialVertex = initialVertex || null;
+      this.last = null;
+      if(this.initialVertex !== null && this.initialVertex.next !== null){
+        var current = this.initialVertex;
+        while(current.next !== null && current.next !== this.initialVertex) current = current.next;
+        this.last = (current.next !== null) ? current.next : current;
+      }
     }
 
     Polygon.prototype.addVertex = function(vertex){
@@ -490,22 +496,33 @@
           last = last.next;
         }
         last.next = vertex;
+        this.last = vertex;
       } else {
         this.initialVertex = vertex;
+        this.last = null;
       }
       dirty = true;
     };
 
     Polygon.prototype.deleteVertex = function(vertex){
+      var current;
       if(this.initialVertex !== null && this.initialVertex.equals(vertex)){
+        if(this.initialVertex === this.last){
+          current = this.initialVertex;
+          while(current.next !== null && current.next !== this.initialVertex) current = current.next;
+          this.last = current;
+        }
         this.initialVertex = this.initialVertex.next;
       } else {
         var deleted = false
-          , current = this.initialVertex
           , next = current.next;
+        current = this.initialVertex;
 
         while(!deleted && next !== null && next !== this.initialVertex){
           if(next.equals(vertex)){
+            if(this.last.equals(vertex)){
+              this.last = (next.next === null) ? current : next.next;
+            }
             current.next = next.next;
             deleted = true;
           } else {
@@ -573,15 +590,11 @@
     };
 
     Polygon.prototype.isClosed = function(){
-      var current = this.initialVertex;
-      while(current.next !== null && current.next !== this.initialVertex) current = current.next;
-      return current.next === this.initialVertex;
+      return this.last === this.initialVertex;
     };
 
     Polygon.prototype.getLastVertex = function(){
-      var current = this.initialVertex;
-      while(current.next !== null && current.next !== this.initialVertex) current = current.next;
-      return current;
+      return this.last;
     };
 
     function isLeft(p0, p1, p2){
