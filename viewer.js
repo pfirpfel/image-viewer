@@ -34,6 +34,9 @@
     // image centre (scroll offset)
       , centre = { x: 0, y: 0 }
 
+    // drawing settings
+      , defaultLineWidth = 3
+
     // viewer states
       , states = {
           DEFAULT: 0,
@@ -484,7 +487,7 @@
       return vertices;
     };
 
-    Polygon.prototype.draw = function(ctx, fillColor){
+    Polygon.prototype.draw = function(ctx, fillColor, strokeColor){
       // only draw lines or polygon if there is more than one vertex
       if(this.initialVertex !== null && this.initialVertex.next !== null){
         var drawPos =  { x: 0, y: 0}
@@ -509,10 +512,13 @@
         } while(current.next !== null && current !== this.initialVertex);
 
         ctx.fillStyle = fillColor || '#0000FF';
+        ctx.strokeStyle = strokeColor || '#66FF33';
         if(current === this.initialVertex){
+          ctx.strokeStyle = strokeColor || '#000000';
           ctx.closePath();
           ctx.fill();
         }
+        ctx.lineWidth = defaultLineWidth;
 
         ctx.stroke();
         ctx.restore();
