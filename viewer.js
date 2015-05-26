@@ -233,9 +233,6 @@
 
         ctx.restore();
 
-        // draw buttons
-        drawButtons(ctx);
-
         // draw solution
         if(solutionVisible && self.solution !== null){
           self.solution.draw(ctx);
@@ -257,6 +254,9 @@
         if(answerVisible && self.answer !== null){
           drawAnswer(ctx);
         }
+
+        // draw buttons
+        drawButtons(ctx);
       }
       if(!stopRendering) window.requestAnimationFrame(render);
     }
