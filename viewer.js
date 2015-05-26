@@ -96,7 +96,7 @@
 
     // solution feature
       , solutionEditable = (typeof options.mode === 'string' && options.mode === 'editSolution')
-      , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution');
+      , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
 
     // annotation feature
       , annotationsEditable = (typeof options.mode === 'string' && options.mode === 'editAnnotations')
