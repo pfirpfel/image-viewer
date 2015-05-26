@@ -34,13 +34,20 @@
     // image centre (scroll offset)
       , centre = { x: 0, y: 0 }
 
+    // drawing settings
+      , defaultLineWidth = 3
+
     // viewer states
       , states = {
           DEFAULT: 0,
           ANSWER_DRAW: 1,
           SOLUTION_DRAW: 2,
           SOLUTION_MOVE: 3,
-          SOLUTION_POINT_DELETE: 4
+          SOLUTION_POINT_DELETE: 4,
+          ANNOTATION_SELECT: 5,
+          ANNOTATION_DRAW: 6,
+          ANNOTATION_MOVE: 7,
+          ANNOTATION_DISPLAY: 8
         }
       , state = states.DEFAULT
 
@@ -89,7 +96,11 @@
 
     // solution feature
       , solutionEditable = (typeof options.mode === 'string' && options.mode === 'editSolution')
-      , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution');
+      , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
+
+    // annotation feature
+      , annotationsEditable = (typeof options.mode === 'string' && options.mode === 'editAnnotations')
+      , annotationsVisible = annotationsEditable || (typeof options.mode === 'string' && options.mode === 'showAnnotations');
 
     // image
     this.image = new Image();
@@ -100,34 +111,20 @@
     // solution
     this.solution = null;
 
-    this.exportSolution = function(){
-      // return empty array if solution is empty
-      if(this.solution === null) return [];
+    // annotations
+    // format: { polygon: Polygon-object, color: color-string }
+    this.annotations = [];
 
-      var exportedSolution = [];
-      var vertices = this.solution.getVertices();
-      //if closed path, add start point at the end again
-      if(vertices[vertices.length - 1].next === vertices[0]) vertices.push(vertices[0]);
-      for(var i = 0; i < vertices.length; i++){
-        exportedSolution.push({
-          x: vertices[i].position.x,
-          y: vertices[i].position.y
-        });
+    function importPolygon(vertexArray){
+       if(vertexArray.length < 1){
+        return new Polygon();
       }
-      return exportedSolution;
-    };
-
-    this.importSolution = function(importedSolution){
-      if(importedSolution.length < 1){
-        this.solution = null;
-        return;
-      }
-      var initialVertex = new Vertex(importedSolution[0].x, importedSolution[0].y)
+      var initialVertex = new Vertex(vertexArray[0].x, vertexArray[0].y)
         , current = initialVertex
         , next = null;
 
-      for(var i = 1; i < importedSolution.length; i++){
-        next = new Vertex(importedSolution[i].x, importedSolution[i].y);
+      for(var i = 1; i < vertexArray.length; i++){
+        next = new Vertex(vertexArray[i].x, vertexArray[i].y);
         if(next.equals(initialVertex)){
           current.next = initialVertex;
           break;
@@ -136,12 +133,58 @@
         current = next;
       }
 
-      this.solution = new Polygon(initialVertex);
+      return new Polygon(initialVertex);
+    }
+
+    function exportPolygon(polygon){
+      // return empty array if polygon is empty
+      if(typeof polygon === 'undefined' || polygon === null) return [];
+
+      var exportedPolygon = [];
+      var vertices = polygon.getVertices();
+      //if closed path, add start point at the end again
+      if(vertices[vertices.length - 1].next === vertices[0]) vertices.push(vertices[0]);
+      for(var i = 0; i < vertices.length; i++){
+        exportedPolygon.push({
+          x: vertices[i].position.x,
+          y: vertices[i].position.y
+        });
+      }
+      return exportedPolygon;
+    }
+
+    this.exportSolution = function(){
+      return exportPolygon(this.solution);
+    };
+
+    this.importSolution = function(importedSolution){
+      this.solution = (importedSolution.length >= 1) ? importPolygon(importedSolution) : null;
       dirty = true;
+    };
+
+    this.exportAnnotations = function(){
+      return this.annotations.map(function(annotation){
+        return {
+          color: annotation.color,
+          polygon: exportPolygon(annotation.polygon)
+        };
+      });
+    };
+
+    this.importAnnotations = function(importedAnnotations){
+      this.annotations = importedAnnotations.map(function(importAnnotation){
+        return {
+          color: importAnnotation.color,
+          polygon: importPolygon(importAnnotation.polygon)
+        };
+      });
     };
 
     // gets called if the solution changes
     this.onSolutionChange = function(solution){};
+
+    // gets called if one or more of the annotations change
+    this.onAnnotationChange = function(annotations){};
 
     function onImageLoad(){
       // set scale to use as much space inside the canvas as possible
@@ -193,9 +236,31 @@
 
         ctx.restore();
 
-        // draw buttons
-        drawButtons(ctx);
+        // draw solution
+        if(solutionVisible && self.solution !== null){
+          self.solution.draw(ctx);
 
+          // draw line to mouse cursor
+         if(solutionEditable && !self.solution.isClosed()){
+            var lastVertexPosition = self.solution.getLastVertex().position
+              //, mousePosition = { x: mouseLastPos.x / scale, y: mouseLastPos.y / scale };
+              , mousePosition = convertToImagePosition(mouseLastPos)
+              , relativePosition = {
+                x: mousePosition.x - lastVertexPosition.x,
+                y: mousePosition.y - lastVertexPosition.y
+              };
+              drawLine(ctx, lastVertexPosition, relativePosition, '#FF3300', defaultLineWidth);
+          }
+        }
+
+        // draw annotations
+        if(annotationsVisible){
+          self.annotations.forEach(function(annotation){
+            annotation.polygon.draw(ctx, annotation.color);
+          });
+        }
+
+        // draw solution
         if(solutionVisible && self.solution !== null){
           self.solution.draw(ctx);
         }
@@ -204,8 +269,39 @@
         if(answerVisible && self.answer !== null){
           drawAnswer(ctx);
         }
+
+        // draw buttons
+        drawButtons(ctx);
       }
       if(!stopRendering) window.requestAnimationFrame(render);
+    }
+
+    function drawLine(ctx, from, to, lineColor, lineWidth){
+      /**
+      * ctx: canvas context
+      * from: start-vertex, in image coordinates
+      * to: end-vertex, in image coordinates
+      * lineColor: color string
+      * lineWidth: number, width in pixel
+      */
+
+      ctx.save();
+
+      // style
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = lineWidth;
+
+      // draw the line
+      var translation = convertToCanvasTranslation(from)
+        , drawPos =  { x: 0, y: 0};
+      ctx.translate(translation.x, translation.y);
+      ctx.scale(scale, scale);
+      ctx.beginPath();
+      ctx.moveTo(drawPos.x, drawPos.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+
+      ctx.restore();
     }
 
     function drawButtons(ctx){
@@ -431,7 +527,7 @@
       return vertices;
     };
 
-    Polygon.prototype.draw = function(ctx){
+    Polygon.prototype.draw = function(ctx, fillColor, strokeColor){
       // only draw lines or polygon if there is more than one vertex
       if(this.initialVertex !== null && this.initialVertex.next !== null){
         var drawPos =  { x: 0, y: 0}
@@ -455,11 +551,14 @@
           current = next;
         } while(current.next !== null && current !== this.initialVertex);
 
-        ctx.fillStyle = '#0000FF';
+        ctx.fillStyle = fillColor || '#0000FF';
+        ctx.strokeStyle = strokeColor || '#66FF33';
         if(current === this.initialVertex){
+          ctx.strokeStyle = strokeColor || '#000000';
           ctx.closePath();
           ctx.fill();
         }
+        ctx.lineWidth = defaultLineWidth;
 
         ctx.stroke();
         ctx.restore();
@@ -471,6 +570,18 @@
           handle.drawHandle(ctx);
         });
       }
+    };
+
+    Polygon.prototype.isClosed = function(){
+      var current = this.initialVertex;
+      while(current.next !== null && current.next !== this.initialVertex) current = current.next;
+      return current.next === this.initialVertex;
+    };
+
+    Polygon.prototype.getLastVertex = function(){
+      var current = this.initialVertex;
+      while(current.next !== null && current.next !== this.initialVertex) current = current.next;
+      return current;
     };
 
     function isLeft(p0, p1, p2){
@@ -648,10 +759,10 @@
             x: evt.clientX - rect.left,
             y: evt.clientY - rect.top
           };
-      if(mouseLastPos !== null && leftMouseButtonDown){
-        var deltaX = newPos.x - mouseLastPos.x
-          , deltaY = newPos.y - mouseLastPos.y;
-
+      mouseLastPos = mouseLastPos || { x: 0, y: 0 };
+      var deltaX = newPos.x - mouseLastPos.x
+        , deltaY = newPos.y - mouseLastPos.y;
+      if(leftMouseButtonDown){
         if(activeMoveElement === centre){
           activeMoveElement.x -= deltaX / scale;
           activeMoveElement.y -= deltaY / scale;
@@ -672,6 +783,7 @@
         if(oldToolTip !== currentTooltip) dirty = true;
       }
       mouseLastPos = newPos;
+      if(solutionEditable && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 2) dirty = true;
     }
 
     function Button(icon, tooltip){
