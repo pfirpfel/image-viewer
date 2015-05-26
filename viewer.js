@@ -239,6 +239,18 @@
         // draw solution
         if(solutionVisible && self.solution !== null){
           self.solution.draw(ctx);
+
+          // draw line to mouse cursor
+         if(solutionEditable && !self.solution.isClosed()){
+            var lastVertexPosition = self.solution.getLastVertex().position
+              //, mousePosition = { x: mouseLastPos.x / scale, y: mouseLastPos.y / scale };
+              , mousePosition = convertToImagePosition(mouseLastPos)
+              , relativePosition = {
+                x: mousePosition.x - lastVertexPosition.x,
+                y: mousePosition.y - lastVertexPosition.y
+              };
+              drawLine(ctx, lastVertexPosition, relativePosition, '#FF3300', defaultLineWidth);
+          }
         }
 
         // draw annotations
@@ -262,6 +274,34 @@
         drawButtons(ctx);
       }
       if(!stopRendering) window.requestAnimationFrame(render);
+    }
+
+    function drawLine(ctx, from, to, lineColor, lineWidth){
+      /**
+      * ctx: canvas context
+      * from: start-vertex, in image coordinates
+      * to: end-vertex, in image coordinates
+      * lineColor: color string
+      * lineWidth: number, width in pixel
+      */
+
+      ctx.save();
+
+      // style
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = lineWidth;
+
+      // draw the line
+      var translation = convertToCanvasTranslation(from)
+        , drawPos =  { x: 0, y: 0};
+      ctx.translate(translation.x, translation.y);
+      ctx.scale(scale, scale);
+      ctx.beginPath();
+      ctx.moveTo(drawPos.x, drawPos.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+
+      ctx.restore();
     }
 
     function drawButtons(ctx){
@@ -532,6 +572,18 @@
       }
     };
 
+    Polygon.prototype.isClosed = function(){
+      var current = this.initialVertex;
+      while(current.next !== null && current.next !== this.initialVertex) current = current.next;
+      return current.next === this.initialVertex;
+    };
+
+    Polygon.prototype.getLastVertex = function(){
+      var current = this.initialVertex;
+      while(current.next !== null && current.next !== this.initialVertex) current = current.next;
+      return current;
+    };
+
     function isLeft(p0, p1, p2){
       // p0, p1, p2: point objects, like { x: 0, y: 0 }
       // returns:
@@ -707,10 +759,10 @@
             x: evt.clientX - rect.left,
             y: evt.clientY - rect.top
           };
-      if(mouseLastPos !== null && leftMouseButtonDown){
-        var deltaX = newPos.x - mouseLastPos.x
-          , deltaY = newPos.y - mouseLastPos.y;
-
+      mouseLastPos = mouseLastPos || { x: 0, y: 0 };
+      var deltaX = newPos.x - mouseLastPos.x
+        , deltaY = newPos.y - mouseLastPos.y;
+      if(leftMouseButtonDown){
         if(activeMoveElement === centre){
           activeMoveElement.x -= deltaX / scale;
           activeMoveElement.y -= deltaY / scale;
@@ -731,6 +783,7 @@
         if(oldToolTip !== currentTooltip) dirty = true;
       }
       mouseLastPos = newPos;
+      if(solutionEditable && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 2) dirty = true;
     }
 
     function Button(icon, tooltip){
