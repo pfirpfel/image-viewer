@@ -438,7 +438,7 @@
       return vertices;
     };
 
-    Polygon.prototype.draw = function(ctx){
+    Polygon.prototype.draw = function(ctx, fillColor){
       // only draw lines or polygon if there is more than one vertex
       if(this.initialVertex !== null && this.initialVertex.next !== null){
         var drawPos =  { x: 0, y: 0}
@@ -462,7 +462,7 @@
           current = next;
         } while(current.next !== null && current !== this.initialVertex);
 
-        ctx.fillStyle = '#0000FF';
+        ctx.fillStyle = fillColor || '#0000FF';
         if(current === this.initialVertex){
           ctx.closePath();
           ctx.fill();
