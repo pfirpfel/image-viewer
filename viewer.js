@@ -40,7 +40,11 @@
           ANSWER_DRAW: 1,
           SOLUTION_DRAW: 2,
           SOLUTION_MOVE: 3,
-          SOLUTION_POINT_DELETE: 4
+          SOLUTION_POINT_DELETE: 4,
+          ANNOTATION_SELECT: 5,
+          ANNOTATION_DRAW: 6,
+          ANNOTATION_MOVE: 7,
+          ANNOTATION_DISPLAY: 8
         }
       , state = states.DEFAULT
 
@@ -91,6 +95,10 @@
       , solutionEditable = (typeof options.mode === 'string' && options.mode === 'editSolution')
       , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution');
 
+    // annotation feature
+      , annotationsEditable = (typeof options.mode === 'string' && options.mode === 'editAnnotations')
+      , annotationsVisible = annotationsEditable || (typeof options.mode === 'string' && options.mode === 'showAnnotations');
+
     // image
     this.image = new Image();
 
@@ -99,6 +107,10 @@
 
     // solution
     this.solution = null;
+
+    // annotations
+    // format: { polygon: Polygon-object, color: color-string }
+    this.annotations = [];
 
     function importPolygon(vertexArray){
        if(vertexArray.length < 1){
@@ -147,8 +159,29 @@
       dirty = true;
     };
 
+    this.exportAnnotations = function(){
+      return this.annotations.map(function(annotation){
+        return {
+          color: annotation.color,
+          polygon: exportPolygon(annotation.polygon)
+        };
+      });
+    };
+
+    this.importAnnotations = function(importedAnnotations){
+      this.annotations = importedAnnotations.map(function(importAnnotation){
+        return {
+          color: importAnnotation.color,
+          polygon: importPolygon(importAnnotation.polygon)
+        };
+      });
+    };
+
     // gets called if the solution changes
     this.onSolutionChange = function(solution){};
+
+    // gets called if one or more of the annotations change
+    this.onAnnotationChange = function(annotations){};
 
     function onImageLoad(){
       // set scale to use as much space inside the canvas as possible
@@ -203,6 +236,19 @@
         // draw buttons
         drawButtons(ctx);
 
+        // draw solution
+        if(solutionVisible && self.solution !== null){
+          self.solution.draw(ctx);
+        }
+
+        // draw annotations
+        if(annotationsVisible){
+          self.annotations.forEach(function(annotation){
+            annotation.polygon.draw(ctx, annotation.color);
+          });
+        }
+
+        // draw solution
         if(solutionVisible && self.solution !== null){
           self.solution.draw(ctx);
         }
