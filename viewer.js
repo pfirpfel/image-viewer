@@ -89,6 +89,8 @@
       , leftMouseButtonDown = false
       // keep last mouse position to calculate drag distance
       , mouseLastPos = null
+      // UI element which is currently in focus, i.e. the mouse is hovering over it
+      , focusUIElement = null
 
     // answer feature
       , answerEditable = (typeof options.mode === 'string' && options.mode === 'editAnswer')
@@ -443,6 +445,15 @@
         }
         return false;
       };
+
+      this.isMouseOver = false;
+      this.onMouseIn = function(){
+        vertexInstance.isMouseOver = true;
+      };
+
+      this.onMouseOut = function(){
+        vertexInstance.isMouseOver = false;
+      };
     }
 
     Vertex.prototype.equals = function(other){
@@ -464,7 +475,9 @@
       var translation = convertToCanvasTranslation(this.position);
       ctx.translate(translation.x, translation.y);
 
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = (this.isMouseOver && this == self.solution.initialVertex)
+                     ? '#FF6600' // if mouse is hovering over this and a click would close the polygon
+                     : '#FFFFFF'; // default
       ctx.strokeStyle = '#000000';
 
       ctx.beginPath();
@@ -775,15 +788,34 @@
       } else {
         var activeElement = getUIElement(evt)
           , oldToolTip = currentTooltip;
-        if(activeElement !== null && typeof activeElement.tooltip !== 'undefined'){
-          currentTooltip = activeElement.tooltip;
-        } else {
+        if(activeElement !== null){
+          if(typeof activeElement.tooltip !== 'undefined'){
+            currentTooltip = activeElement.tooltip;
+          }
+          // new focus UI element?
+          if(activeElement !== focusUIElement){
+            if(focusUIElement !== null && typeof focusUIElement.onMouseOut !== 'undefined'){
+              focusUIElement.onMouseOut();
+            }
+            focusUIElement = activeElement;
+            if(typeof focusUIElement.onMouseIn !== 'undefined'){
+              focusUIElement.onMouseIn();
+            }
+          }
+        } else { // no activeElement
           currentTooltip = null;
+          if(focusUIElement !== null){
+            if(typeof focusUIElement.onMouseOut !== 'undefined'){
+              focusUIElement.onMouseOut();
+            }
+            focusUIElement = null;
+          }
         }
         if(oldToolTip !== currentTooltip) dirty = true;
       }
       mouseLastPos = newPos;
-      if(solutionEditable && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 2) dirty = true;
+      //if(solutionEditable && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 2) dirty = true;
+      if(solutionEditable) dirty = true;
     }
 
     function Button(icon, tooltip){
