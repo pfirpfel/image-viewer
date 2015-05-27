@@ -417,7 +417,7 @@
             }
             dirty = true;
           }
-          return;
+          return false;
         }
         if(state === states.POLYGON_DRAW){
           var isInitialVertex = newVertex.polygon !== null
@@ -428,9 +428,10 @@
             if(newVertex.polygon === self.solution){
               self.onSolutionChange(self.exportSolution());
             }
-            return;
+            return false;
           }
         }
+        return true;
       };
 
       newVertex.onMouseDown = function(){
@@ -459,7 +460,7 @@
 
       this.handleWidth = 12; // also used as bounding box
 
-      this.onClick = function(evt){};
+      this.onClick = function(evt){ return true; }; // just bubble on default
 
       this.onMouseDown = function(){};
     }
@@ -504,6 +505,19 @@
 
     function Polygon(initialVertex){
       this.initialVertex = initialVertex || null;
+
+      this.onMouseDown = function(evt){
+        return false;
+      };
+
+      this.onClick = function(evt){
+        if(solutionEditable || annotationsEditable){
+          alert('clicked!');
+          return false; // don't bubble
+        } else {
+          return true; // bubble
+        }
+      };
     }
 
     Polygon.prototype.addVertex = function(vertex){
@@ -637,7 +651,7 @@
         , wn = 0
 
       // point to check
-        , p = { x: x, y: y };
+        , p = convertToImagePosition({ x: x, y: y });
 
       // if polygon is not closed, the coordinates can't be within bounds
       if(vertices[vertices.length - 1].next !== vertices[0]) return false;
@@ -690,7 +704,7 @@
       ctx.save();
 
       var shapeScale = 1.5
-        , transalation = convertToCanvasTranslation(self.answer);
+        , transalation = self.answer;
 
       ctx.translate(transalation.x, transalation.y);
       ctx.scale(shapeScale * scale, shapeScale * scale);
@@ -704,11 +718,25 @@
     }
 
     function getUIElements(){
-      // only return the solution vertices handler if in solution edit mode and there are some already
-      var solutionVertices = (self.solution !== null && solutionEditable)
-                             ? self.solution.getVertices()
-                             : [];
-      return buttons.concat(solutionVertices);
+      var collectedUIElements = [];
+      // add buttons
+      collectedUIElements = collectedUIElements.concat(buttons);
+
+      // only add the polygon vertices handler
+      // if there is an active polygon
+      // and we are in polygon edit mode
+      // (and add them before the polygons)
+      if(solutionEditable && activePolygon !== null){
+        collectedUIElements = collectedUIElements.concat(activePolygon.getVertices());
+      }
+
+      // add annotations
+      collectedUIElements = collectedUIElements.concat(self.annotations);
+
+      // add solution, if it exists
+      if(self.solution !== null) collectedUIElements.push(self.solution);
+
+      return collectedUIElements;
     }
 
     function getUIElement(evt){
@@ -745,16 +773,15 @@
     function onMouseClick(evt){
       if(evt.button === 0){ // left/main button
         var activeElement = getUIElement(evt);
-        if(activeElement !== null){
-          activeElement.onClick(evt);
-        } else {
+        if(activeElement === null || activeElement.onClick(evt)){
           var rect = canvas.getBoundingClientRect()
             , clickPos = {
                 x: evt.clientX - rect.left,
                 y: evt.clientY - rect.top
               };
           if(state === states.ANSWER_DRAW){
-            self.answer = convertToImagePosition(clickPos);
+            //self.answer = convertToImagePosition(clickPos);
+            self.answer = clickPos;
             dirty = true;
           }
           if(state === states.POLYGON_DRAW){
@@ -853,7 +880,7 @@
       this.enabledAlpha = 0.7;
 
       // click action
-      this.onClick = function(){ alert('no click action set!'); };
+      this.onClick = function(){ alert('no click action set!'); return true; };
 
       // mouse down action
       this.onMouseDown = function(){ return false; };
@@ -959,14 +986,15 @@
 
       //// init buttons
       // apply zooming functions to their buttons
-      zoomOutButton.onClick = function(){ self.zoomOut(); };
-      zoomInButton.onClick = function(){ self.zoomIn(); };
+      zoomOutButton.onClick = function(){ self.zoomOut(); return false; };
+      zoomInButton.onClick = function(){ self.zoomIn(); return false; };
       // if answer feature enable, show their buttons
       if(answerEditable){
         // delete answer button
         deleteAnswerButton.onClick = function(){
           self.answer = null;
           dirty = true;
+          return false;
         };
         // add answer button
         addAnswerButton.enabled = function(){
@@ -976,6 +1004,7 @@
         addAnswerButton.onClick = function(){
           state = (state === states.ANSWER_DRAW) ? states.DEFAULT : states.ANSWER_DRAW;
           dirty = true;
+          return false;
         };
         // merge them with the other buttons
         buttons = defaultButtons.concat(answerButtons);
@@ -990,6 +1019,7 @@
                         ? states.DEFAULT
                         : states.POLYGON_DRAW;
           dirty = true;
+          return false;
         };
         moveSolutionButton.enabled = function(){
           return (state === states.POLYGON_MOVE);
@@ -999,6 +1029,7 @@
                         ? states.DEFAULT
                         : states.POLYGON_MOVE;
           dirty = true;
+          return false;
         };
         deleteSolutionPointButton.enabled = function(){
           return (state === states.POLYGON_POINT_DELETE);
@@ -1008,11 +1039,13 @@
                         ? states.DEFAULT
                         : states.POLYGON_POINT_DELETE;
           dirty = true;
+          return false;
         };
         deleteSolutionButton.onClick = function(){
           self.solution = activePolygon = null;
           self.onSolutionChange(self.exportSolution());
           dirty = true;
+          return false;
         };
 
         // merge them with the other buttons
