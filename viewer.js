@@ -429,6 +429,7 @@
         if(state === states.SOLUTION_DRAW
         && self.solution !== null
         && vertexInstance.equals(self.solution.initialVertex)
+        && self.solution.getLength() > 2
         ){
           self.solution.close();
           state = states.DEFAULT;
@@ -595,6 +596,17 @@
       var current = this.initialVertex;
       while(current.next !== null && current.next !== this.initialVertex) current = current.next;
       return current;
+    };
+
+    Polygon.prototype.getLength = function(){
+      if(this.initialVertex === null) return 0;
+      var length = 1;
+      var current = this.initialVertex;
+      while(current.next !== null && current.next !== this.initialVertex){
+        current = current.next;
+        length++;
+      }
+      return length;
     };
 
     function isLeft(p0, p1, p2){
