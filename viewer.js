@@ -504,6 +504,8 @@
     }
 
     function Polygon(initialVertex){
+      var polygonInstance = this;
+
       this.initialVertex = initialVertex || null;
 
       this.onMouseDown = function(evt){
@@ -512,7 +514,7 @@
 
       this.onClick = function(evt){
         if(solutionEditable || annotationsEditable){
-          alert('clicked!');
+          activePolygon = polygonInstance;
           return false; // don't bubble
         } else {
           return true; // bubble
