@@ -244,13 +244,8 @@
           // draw line to mouse cursor
          if(solutionEditable && !self.solution.isClosed()){
             var lastVertexPosition = self.solution.getLastVertex().position
-              //, mousePosition = { x: mouseLastPos.x / scale, y: mouseLastPos.y / scale };
-              , mousePosition = convertToImagePosition(mouseLastPos)
-              , relativePosition = {
-                x: mousePosition.x - lastVertexPosition.x,
-                y: mousePosition.y - lastVertexPosition.y
-              };
-              drawLine(ctx, lastVertexPosition, relativePosition, '#FF3300', defaultLineWidth);
+              , mousePosition = convertToImagePosition(mouseLastPos);
+              drawLine(ctx, lastVertexPosition, mousePosition, '#FF3300', defaultLineWidth);
           }
         }
 
@@ -294,12 +289,16 @@
 
       // draw the line
       var translation = convertToCanvasTranslation(from)
+        , relativeToPosition = {
+          x: to.x - from.x,
+          y: to.y - from.y
+        }
         , drawPos =  { x: 0, y: 0};
       ctx.translate(translation.x, translation.y);
       ctx.scale(scale, scale);
       ctx.beginPath();
       ctx.moveTo(drawPos.x, drawPos.y);
-      ctx.lineTo(to.x, to.y);
+      ctx.lineTo(relativeToPosition.x, relativeToPosition.y);
       ctx.stroke();
 
       ctx.restore();
