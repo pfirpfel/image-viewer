@@ -41,13 +41,10 @@
       , states = {
           DEFAULT: 0,
           ANSWER_DRAW: 1,
-          SOLUTION_DRAW: 2,
-          SOLUTION_MOVE: 3,
-          SOLUTION_POINT_DELETE: 4,
-          ANNOTATION_SELECT: 5,
-          ANNOTATION_DRAW: 6,
-          ANNOTATION_MOVE: 7,
-          ANNOTATION_DISPLAY: 8
+          POLYGON_DRAW: 2,
+          POLYGON_MOVE: 3,
+          POLYGON_POINT_DELETE: 4,
+          ANNOTATION_DISPLAY: 5
         }
       , state = states.DEFAULT
 
@@ -91,6 +88,8 @@
       , mouseLastPos = null
       // UI element which is currently in focus, i.e. the mouse is hovering over it
       , focusUIElement = null
+      // active polygon in edit mode
+      , activePolygon = null
 
     // answer feature
       , answerEditable = (typeof options.mode === 'string' && options.mode === 'editAnswer')
@@ -160,7 +159,7 @@
     };
 
     this.importSolution = function(importedSolution){
-      this.solution = (importedSolution.length >= 1) ? importPolygon(importedSolution) : null;
+      this.solution = activePolygon = (importedSolution.length >= 1) ? importPolygon(importedSolution) : null;
       dirty = true;
     };
 
@@ -411,26 +410,32 @@
       var newVertex = new Vertex(x, y, polygon);
 
       newVertex.onClick = function(evt){
-        if(state === states.SOLUTION_POINT_DELETE){
-          self.solution.deleteVertex(newVertex);
-          self.onSolutionChange(self.exportSolution());
-          dirty = true;
+        if(state === states.POLYGON_POINT_DELETE){
+          if(newVertex.polygon !== null){
+            newVertex.polygon.deleteVertex(newVertex);
+            if(newVertex.polygon === self.solution){
+              self.onSolutionChange(self.exportSolution());
+            }
+            dirty = true;
+          }
           return;
         }
-        if(state === states.SOLUTION_DRAW
-        && self.solution !== null
-        && newVertex.equals(self.solution.initialVertex)
-        && self.solution.getLength() > 2
-        ){
-          self.solution.close();
-          state = states.DEFAULT;
-          self.onSolutionChange(self.exportSolution());
-          return;
+        if(state === states.POLYGON_DRAW){
+          var isInitialVertex = newVertex.polygon !== null
+                                && newVertex.equals(newVertex.polygon.initialVertex);
+          if(isInitialVertex && newVertex.polygon.getLength() > 2){
+            newVertex.polygon.close();
+            state = states.DEFAULT;
+            if(newVertex.polygon === self.solution){
+              self.onSolutionChange(self.exportSolution());
+            }
+            return;
+          }
         }
       };
 
       newVertex.onMouseDown = function(){
-        if(state === states.SOLUTION_MOVE){
+        if(state === states.POLYGON_MOVE){
           activeMoveElement = newVertex.position;
           leftMouseButtonDown = true;
           return true;
@@ -481,7 +486,7 @@
 
       ctx.fillStyle = (vertex === focusUIElement
                        && vertex === self.solution.initialVertex
-                       && state === states.SOLUTION_DRAW)
+                       && state === states.POLYGON_DRAW)
                      ? '#FF6600' // if mouse is hovering over this and a click would close the polygon
                      : '#FFFFFF'; // default
       ctx.strokeStyle = '#000000';
@@ -753,7 +758,7 @@
             self.answer = convertToImagePosition(clickPos);
             dirty = true;
           }
-          if(state === states.SOLUTION_DRAW){
+          if(state === states.POLYGON_DRAW){
             if(evt.shiftKey){
               // close polygon
               if(self.solution !== null){
@@ -764,7 +769,7 @@
             } else {
               var newVertexPosition = convertToImagePosition(clickPos)
                 , newVertex = createVertex(newVertexPosition.x, newVertexPosition.y);
-              if(self.solution === null) self.solution = new Polygon();
+              if(self.solution === null) self.solution = activePolygon = new Polygon();
               self.solution.addVertex(newVertex);
             }
             self.onSolutionChange(self.exportSolution());
@@ -979,34 +984,34 @@
       // if solution feature enable, show their buttons
       if(solutionEditable){
         drawSolutionPointButton.enabled = function(){
-          return (state === states.SOLUTION_DRAW);
+          return (state === states.POLYGON_DRAW);
         };
         drawSolutionPointButton.onClick = function(){
-          state = (state === states.SOLUTION_DRAW)
+          state = (state === states.POLYGON_DRAW)
                         ? states.DEFAULT
-                        : states.SOLUTION_DRAW;
+                        : states.POLYGON_DRAW;
           dirty = true;
         };
         moveSolutionButton.enabled = function(){
-          return (state === states.SOLUTION_MOVE);
+          return (state === states.POLYGON_MOVE);
         };
         moveSolutionButton.onClick = function(){
-          state = (state === states.SOLUTION_MOVE)
+          state = (state === states.POLYGON_MOVE)
                         ? states.DEFAULT
-                        : states.SOLUTION_MOVE;
+                        : states.POLYGON_MOVE;
           dirty = true;
         };
         deleteSolutionPointButton.enabled = function(){
-          return (state === states.SOLUTION_POINT_DELETE);
+          return (state === states.POLYGON_POINT_DELETE);
         };
         deleteSolutionPointButton.onClick = function(){
-          state = (state === states.SOLUTION_POINT_DELETE)
+          state = (state === states.POLYGON_POINT_DELETE)
                         ? states.DEFAULT
-                        : states.SOLUTION_POINT_DELETE;
+                        : states.POLYGON_POINT_DELETE;
           dirty = true;
         };
         deleteSolutionButton.onClick = function(){
-          self.solution = null;
+          self.solution = activePolygon = null;
           self.onSolutionChange(self.exportSolution());
           dirty = true;
         };
