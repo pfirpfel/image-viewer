@@ -121,12 +121,12 @@
        if(vertexArray.length < 1){
         return new Polygon();
       }
-      var initialVertex = new Vertex(vertexArray[0].x, vertexArray[0].y)
+      var initialVertex = createVertex(vertexArray[0].x, vertexArray[0].y)
         , current = initialVertex
         , next = null;
 
       for(var i = 1; i < vertexArray.length; i++){
-        next = new Vertex(vertexArray[i].x, vertexArray[i].y);
+        next = createVertex(vertexArray[i].x, vertexArray[i].y);
         if(next.equals(initialVertex)){
           current.next = initialVertex;
           break;
@@ -407,28 +407,19 @@
       };
     }
 
-    function Vertex(x, y) {
-      var vertexInstance = this;
+    function createVertex(x, y, polygon){
+      var newVertex = new Vertex(x, y, polygon);
 
-      var pos = this.position = {
-        x: x,
-        y: y
-      };
-
-      this.next = null;
-
-      this.handleWidth = 12;
-
-      this.onClick = function(evt){
+      newVertex.onClick = function(evt){
         if(state === states.SOLUTION_POINT_DELETE){
-          self.solution.deleteVertex(vertexInstance);
+          self.solution.deleteVertex(newVertex);
           self.onSolutionChange(self.exportSolution());
           dirty = true;
           return;
         }
         if(state === states.SOLUTION_DRAW
         && self.solution !== null
-        && vertexInstance.equals(self.solution.initialVertex)
+        && newVertex.equals(self.solution.initialVertex)
         && self.solution.getLength() > 2
         ){
           self.solution.close();
@@ -438,23 +429,35 @@
         }
       };
 
-      this.onMouseDown = function(){
+      newVertex.onMouseDown = function(){
         if(state === states.SOLUTION_MOVE){
-          activeMoveElement = pos;
+          activeMoveElement = newVertex.position;
           leftMouseButtonDown = true;
           return true;
         }
         return false;
       };
 
-      this.isMouseOver = false;
-      this.onMouseIn = function(){
-        vertexInstance.isMouseOver = true;
+      return newVertex;
+    }
+
+    function Vertex(x, y, polygon) {
+      var vertexInstance = this;
+
+      this.position = {
+        x: x,
+        y: y
       };
 
-      this.onMouseOut = function(){
-        vertexInstance.isMouseOver = false;
-      };
+      this.polygon = polygon || null;
+
+      this.next = null;
+
+      this.handleWidth = 12; // also used as bounding box
+
+      this.onClick = function(evt){};
+
+      this.onMouseDown = function(){};
     }
 
     Vertex.prototype.equals = function(other){
@@ -469,29 +472,31 @@
           && y >= canvasPosition.y - this.handleWidth / 2 && y <= canvasPosition.y + this.handleWidth / 2;
     };
 
-    Vertex.prototype.drawHandle = function(ctx){
+    function drawVertexHandle(ctx, vertex){
       // preserve context
       ctx.save();
 
-      var translation = convertToCanvasTranslation(this.position);
+      var translation = convertToCanvasTranslation(vertex.position);
       ctx.translate(translation.x, translation.y);
 
-      ctx.fillStyle = (this.isMouseOver && this == self.solution.initialVertex)
+      ctx.fillStyle = (vertex === focusUIElement
+                       && vertex === self.solution.initialVertex
+                       && state === states.SOLUTION_DRAW)
                      ? '#FF6600' // if mouse is hovering over this and a click would close the polygon
                      : '#FFFFFF'; // default
       ctx.strokeStyle = '#000000';
 
       ctx.beginPath();
-      ctx.rect(-this.handleWidth/2, // x
-               -this.handleWidth/2, // y
-               this.handleWidth, // width
-               this.handleWidth); // height
+      ctx.rect(-vertex.handleWidth/2, // x
+               -vertex.handleWidth/2, // y
+               vertex.handleWidth, // width
+               vertex.handleWidth); // height
       ctx.stroke();
       ctx.fill();
 
       // restore context
       ctx.restore();
-    };
+    }
 
     function Polygon(initialVertex){
       this.initialVertex = initialVertex || null;
@@ -507,6 +512,7 @@
       } else {
         this.initialVertex = vertex;
       }
+      vertex.polygon = this;
       dirty = true;
     };
 
@@ -581,7 +587,7 @@
       // draw handles
       if(solutionEditable){
         this.getVertices().forEach(function(handle){
-          handle.drawHandle(ctx);
+          drawVertexHandle(ctx, handle);
         });
       }
     };
@@ -757,7 +763,7 @@
               }
             } else {
               var newVertexPosition = convertToImagePosition(clickPos)
-                , newVertex = new Vertex(newVertexPosition.x, newVertexPosition.y);
+                , newVertex = createVertex(newVertexPosition.x, newVertexPosition.y);
               if(self.solution === null) self.solution = new Polygon();
               self.solution.addVertex(newVertex);
             }
@@ -806,27 +812,17 @@
           }
           // new focus UI element?
           if(activeElement !== focusUIElement){
-            if(focusUIElement !== null && typeof focusUIElement.onMouseOut !== 'undefined'){
-              focusUIElement.onMouseOut();
-            }
             focusUIElement = activeElement;
-            if(typeof focusUIElement.onMouseIn !== 'undefined'){
-              focusUIElement.onMouseIn();
-            }
           }
         } else { // no activeElement
           currentTooltip = null;
           if(focusUIElement !== null){
-            if(typeof focusUIElement.onMouseOut !== 'undefined'){
-              focusUIElement.onMouseOut();
-            }
             focusUIElement = null;
           }
         }
         if(oldToolTip !== currentTooltip) dirty = true;
       }
       mouseLastPos = newPos;
-      //if(solutionEditable && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 2) dirty = true;
       if(solutionEditable) dirty = true;
     }
 
