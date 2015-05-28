@@ -73,6 +73,18 @@
                            moveSolutionButton,
                            drawSolutionPointButton]
 
+      // buttons for the annotations feature
+      , addNewAnnotationButton = new Button('\uf067', 'Start drawing a new annotation')
+      , drawAnnotationPointButton = new Button('\uf040', 'Draw new annotation point (close with shift-click)')
+      , moveAnnotationButton = new Button('\uf047', 'Move annotation point')
+      , deleteAnnotationPointButton = new Button('\uf00d', 'Delete annotation point')
+      , deleteAnnotationButton = new Button('\uf1f8', 'Delete annotation')
+      , annotationButtonsNoActivePolygon = [ addNewAnnotationButton ]
+      , annotationButtonsWithActivePolygon = [deleteAnnotationButton,
+                                              deleteAnnotationPointButton,
+                                              moveAnnotationButton,
+                                              drawAnnotationPointButton]
+
       // contains all active buttons
       , buttons = defaultButtons.slice()
 
