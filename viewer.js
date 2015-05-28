@@ -239,7 +239,7 @@
 
         // draw solution
         if(solutionVisible && self.solution !== null){
-          self.solution.draw(ctx);
+          drawPolygon(ctx, self.solution);
 
           // draw line to mouse cursor
          if(solutionEditable && !self.solution.isClosed()){
@@ -252,13 +252,8 @@
         // draw annotations
         if(annotationsVisible){
           self.annotations.forEach(function(annotation){
-            annotation.polygon.draw(ctx, annotation.color);
+            drawPolygon(ctx, annotation.polygon, annotation.color);
           });
-        }
-
-        // draw solution
-        if(solutionVisible && self.solution !== null){
-          self.solution.draw(ctx);
         }
 
         // draw answer
@@ -567,13 +562,13 @@
       return vertices;
     };
 
-    Polygon.prototype.draw = function(ctx, fillColor, strokeColor){
+    function drawPolygon(ctx, polygon, fillColor, strokeColor){
       // only draw lines or polygon if there is more than one vertex
-      if(this.initialVertex !== null && this.initialVertex.next !== null){
+      if(polygon.initialVertex !== null && polygon.initialVertex.next !== null){
         var drawPos =  { x: 0, y: 0}
-          , current = this.initialVertex
+          , current = polygon.initialVertex
           , next
-          , translation = convertToCanvasTranslation(this.initialVertex.position)
+          , translation = convertToCanvasTranslation(polygon.initialVertex.position)
           ;
         ctx.save();
         ctx.globalAlpha = 0.7;
@@ -589,11 +584,11 @@
           };
           ctx.lineTo(drawPos.x, drawPos.y);
           current = next;
-        } while(current.next !== null && current !== this.initialVertex);
+        } while(current.next !== null && current !== polygon.initialVertex);
 
         ctx.fillStyle = fillColor || '#0000FF';
         ctx.strokeStyle = strokeColor || '#66FF33';
-        if(current === this.initialVertex){
+        if(current === polygon.initialVertex){
           ctx.strokeStyle = strokeColor || '#000000';
           ctx.closePath();
           ctx.fill();
@@ -605,12 +600,12 @@
       }
 
       // draw handles
-      if(solutionEditable){
-        this.getVertices().forEach(function(handle){
+      if((polygon === activePolygon && (solutionEditable || annotationsEditable))){
+        polygon.getVertices().forEach(function(handle){
           drawVertexHandle(ctx, handle);
         });
       }
-    };
+    }
 
     Polygon.prototype.isClosed = function(){
       var current = this.initialVertex;
