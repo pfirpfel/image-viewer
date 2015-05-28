@@ -31,6 +31,9 @@
 
     options = (typeof options === 'object') ? options : {};
 
+    // sanitize options.mode once
+    options.mode = (typeof options.mode === 'string') ? options.mode : "";
+
     // canvas
     var canvas = document.getElementById(canvasId)
       , context = canvas.getContext("2d")
@@ -118,16 +121,16 @@
       , activePolygon = null
 
     // answer feature
-      , answerEditable = (typeof options.mode === 'string' && options.mode === 'editAnswer')
-      , answerVisible = answerEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
+      , answerEditable = options.mode === 'editAnswer'
+      , answerVisible = answerEditable || options.mode === 'showSolution'
 
     // solution feature
-      , solutionEditable = (typeof options.mode === 'string' && options.mode === 'editSolution')
-      , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
+      , solutionEditable = options.mode === 'editSolution'
+      , solutionVisible = solutionEditable || options.mode === 'showSolution'
 
     // annotation feature
-      , annotationsEditable = (typeof options.mode === 'string' && options.mode === 'editAnnotations')
-      , annotationsVisible = annotationsEditable || (typeof options.mode === 'string' && options.mode === 'showAnnotations');
+      , annotationsEditable = options.mode === 'editAnnotations'
+      , annotationsVisible = annotationsEditable || options.mode === 'showAnnotations';
 
     // image
     this.image = new Image();
