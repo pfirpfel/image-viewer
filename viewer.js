@@ -6,15 +6,29 @@
 
     // options-object
     // possible start options:
-    // * mode:     string (other than default viewer-only mode)
-    //             - 'editAnswer'   : displays answer and answer related buttons
-    //             - 'editSolution' : displays solution and solution related buttons
-    //             - 'showSolution' : displays answer and solution
-    // * answer:   position-object, like { x: 0; y: 0; }
-    //             position of answer inside the image
-    // * solution: array of positions, like [{ x: 0; y: 0; }, { x: 1; y: 1; }]
-    //             the positions represent vertices which make up the solution
-    //             polygon
+    // * mode:        string (other than default viewer-only mode)
+    //                - 'editAnswer'      : displays answer and answer related buttons
+    //                - 'editSolution'    : displays solution and solution related buttons
+    //                - 'showSolution'    : displays answer and solution
+    //                - 'editAnnotations' : displays annotations and related edit-buttons
+    //                - 'showAnnotations' : displays annotations
+    //
+    // * answer:      position-object, like { x: 0; y: 0; }
+    //                position of answer inside the image
+    //
+    // * solution:    array of positions, like [{ x: 0; y: 0; }, { x: 1; y: 1; }]
+    //                the positions represent vertices which make up the solution
+    //                polygon
+    //
+    // * annotations: array of annotation-objects, example:
+    // [
+    //  {
+    //   polygon: [{ x: 0; y: 0; }, { x: 1; y: 1; }, { x: 2; y: 2; }, { x: 0; y: 0; }],
+    //   color: '#00FF00'
+    //  }
+    // ]
+    //
+
     options = (typeof options === 'object') ? options : {};
 
     // canvas
