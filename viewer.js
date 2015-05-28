@@ -690,9 +690,10 @@
 
       // change color if answer is within solution
       if(solutionVisible){ // show solution flag enabled?
+        var canvasAnswer = convertToCanvasTranslation(self.answer);
         // is the answer within the solution?
         if(self.solution !== null
-        && self.solution.isWithinBounds(self.answer.x, self.answer.y)){
+        && self.solution.isWithinBounds(canvasAnswer.x, canvasAnswer.y)){
           color = '#00ff00'; //green
         } else {
           color = '#ff0000'; // red
@@ -706,7 +707,7 @@
       ctx.save();
 
       var shapeScale = 1.5
-        , transalation = self.answer;
+        , transalation = convertToCanvasTranslation(self.answer);
 
       ctx.translate(transalation.x, transalation.y);
       ctx.scale(shapeScale * scale, shapeScale * scale);
@@ -782,8 +783,7 @@
                 y: evt.clientY - rect.top
               };
           if(state === states.ANSWER_DRAW){
-            //self.answer = convertToImagePosition(clickPos);
-            self.answer = clickPos;
+            self.answer = convertToImagePosition(clickPos);
             dirty = true;
           }
           if(state === states.POLYGON_DRAW){
