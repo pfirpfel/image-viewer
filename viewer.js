@@ -692,6 +692,9 @@
       // if polygon is not closed, the coordinates can't be within bounds
       if(vertices[vertices.length - 1].next !== vertices[0]) return false;
 
+      // adding start point again (too include last, closing edge)
+      vertices.push(vertices[0]);
+
       // algorithm see: http://geomalgorithms.com/a03-_inclusion.html
       for(var i = 0; i + 1 < vertices.length; i++){ // edge from vertices[i] to vertices[i+1]
         if(vertices[i].position.y <= p.y){ // start y <= p.y
