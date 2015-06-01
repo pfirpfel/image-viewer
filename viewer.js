@@ -548,7 +548,7 @@
       this.onClick = function(evt){
         if(solutionEditable || annotationsEditable){
           activePolygon = polygonInstance;
-          state = states.POLYGON_DRAW;
+          dirty = true;
           return false; // don't bubble
         } else {
           return true; // bubble
@@ -840,7 +840,7 @@
             self.answer = convertToImagePosition(clickPos);
             dirty = true;
           }
-          if(isState('POLYGON_DRAW')){
+          else if(isState('POLYGON_DRAW')){
             if(evt.shiftKey){
               // close polygon
               if(self.solution !== null){
@@ -869,6 +869,12 @@
             }
             self.onSolutionChange(self.exportSolution());
             dirty = true;
+          }
+          else {
+            if(activePolygon !== null){
+              activePolygon = null;
+              dirty = true;
+            }
           }
         }
       }
