@@ -1163,7 +1163,7 @@
             , i = 0;
           for(;i < self.annotations.length; i++){
             if(self.annotations[i].polygon === activePolygon){
-              deletePosition = 1;
+              deletePosition = i;
               break;
             }
           }
