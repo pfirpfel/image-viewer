@@ -12,7 +12,9 @@
     <button onclick="javascript:toDefault();">Default mode</button>
     <button onclick="javascript:toEditSolution();">Step 1: Create solution</button>
     <button onclick="javascript:toEditAnswer();">Step 2: Give answer</button>
-    <button onclick="javascript:toShowSolution();">Step 3: Check answer</button><br>
+    <button onclick="javascript:toShowSolution();">Step 3: Check answer</button>
+    <button onclick="javascript:toEditAnnotations();">Other: Edit annotations</button>
+    <button onclick="javascript:toShowAnnotations();">Other: Show annotations</button><br>
     <canvas id="viewerCanvas" width="800" height="500" style="border: 1px solid black;"></canvas>
     <p>
     Select picture:
@@ -29,6 +31,7 @@
         , canvasId = 'viewerCanvas'
         , myImageViewer = new ImageViewer(canvasId, imageSrc)
         , solution = []
+        , annotations = []
         , answer = null;
 
       WebFont.load({
@@ -50,6 +53,7 @@
       function saveState(){
         answer = myImageViewer.answer;
         solution = myImageViewer.exportSolution();
+        annotations = myImageViewer.exportAnnotations();
       }
 
       function toDefault(){
@@ -73,6 +77,14 @@
         reloadImageViewer('showSolution');
       }
 
+      function toEditAnnotations(){
+        reloadImageViewer('editAnnotations');
+      }
+
+      function toShowAnnotations(){
+        reloadImageViewer('showAnnotations');
+      }
+
       function reloadImageViewer(mode){
         if(myImageViewer !== null){
           saveState();
@@ -80,7 +92,9 @@
         }
         var options = { mode: mode,
                         solution: solution,
-                        answer: answer };
+                        answer: answer,
+                        annotations: annotations
+                      };
         myImageViewer = new ImageViewer(canvasId, imageSrc, options);
       }
 
