@@ -278,13 +278,6 @@
         // draw solution
         if(solutionVisible && self.solution !== null){
           drawPolygon(ctx, self.solution);
-
-          // draw line to mouse cursor
-         if(solutionEditable && !self.solution.isClosed()){
-            var lastVertexPosition = self.solution.getLastVertex().position
-              , mousePosition = convertToImagePosition(mouseLastPos);
-              drawLine(ctx, lastVertexPosition, mousePosition, '#FF3300', defaultLineWidth);
-          }
         }
 
         // draw annotations
@@ -292,6 +285,16 @@
           self.annotations.forEach(function(annotation){
             drawPolygon(ctx, annotation.polygon, annotation.color);
           });
+        }
+
+        // draw line to mouse cursor
+        if((solutionEditable || annotationsEditable)
+          && activePolygon !== null
+          && activePolygon.getLength() > 0
+          && !activePolygon.isClosed()){
+          var lastVertexPosition = activePolygon.getLastVertex().position
+            , mousePosition = convertToImagePosition(mouseLastPos);
+            drawLine(ctx, lastVertexPosition, mousePosition, '#FF3300', defaultLineWidth);
         }
 
         // draw answer
@@ -648,12 +651,14 @@
 
     Polygon.prototype.isClosed = function(){
       var current = this.initialVertex;
+      if(current === null) return false;
       while(current.next !== null && current.next !== this.initialVertex) current = current.next;
       return current.next === this.initialVertex;
     };
 
     Polygon.prototype.getLastVertex = function(){
       var current = this.initialVertex;
+      if(current === null) return null;
       while(current.next !== null && current.next !== this.initialVertex) current = current.next;
       return current;
     };
@@ -934,7 +939,7 @@
         if(oldToolTip !== currentTooltip) dirty = true;
       }
       mouseLastPos = newPos;
-      if(solutionEditable) dirty = true;
+      if(solutionEditable || annotationsEditable) dirty = true;
     }
 
     function Button(icon, tooltip){
