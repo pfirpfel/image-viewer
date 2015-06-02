@@ -95,12 +95,12 @@
       , drawAnnotationPointButton = new Button('\uf040', 'Draw new annotation point (close with shift-click)')
       , moveAnnotationButton = new Button('\uf047', 'Move annotation point')
       , deleteAnnotationPointButton = new Button('\uf00d', 'Delete annotation point')
-      , deleteAnnotationButton = new Button('\uf1f8', 'Delete annotation')
-      , annotationButtons = [ addNewAnnotationButton,
-                              deleteAnnotationButton,
+      , deleteAnnotationButton = new Button('\uf1f8', 'Delete active annotation')
+      , annotationButtons = [ deleteAnnotationButton,
                               deleteAnnotationPointButton,
                               moveAnnotationButton,
-                              drawAnnotationPointButton]
+                              drawAnnotationPointButton,
+                              addNewAnnotationButton]
 
       // contains all active buttons
       , buttons = defaultButtons.slice()
@@ -868,7 +868,7 @@
                   }
                   activePolygon = self.solution;
                 } else if(annotationsEditable){
-                  console.log("should have active polygon");
+                  console.log("No active polygon. Click on a polygon to edit it!");
                   return;
                 } else {
                   console.log("invalid POLYGON_DRAW state");
