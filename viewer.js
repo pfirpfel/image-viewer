@@ -791,7 +791,9 @@
       }
 
       // add annotations
-      collectedUIElements = collectedUIElements.concat(self.annotations);
+      collectedUIElements = collectedUIElements.concat(self.annotations.map(function(annotation){
+        return annotation.polygon;
+      }));
 
       // add solution, if it exists
       if(self.solution !== null) collectedUIElements.push(self.solution);
