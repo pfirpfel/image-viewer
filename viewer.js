@@ -809,8 +809,8 @@
           }
         , activeUIElement =
               getUIElements()
-              .filter(function(button){
-                return button.isWithinBounds(pos.x, pos.y);
+              .filter(function(uiElement){
+                return uiElement.isWithinBounds(pos.x, pos.y);
               });
       return (activeUIElement.length > 0 ) ? activeUIElement[0] : null;
     }
