@@ -1064,6 +1064,10 @@
       if(Object.prototype.toString.call(options.solution) === '[object Array]')
         self.importSolution(options.solution);
 
+      //// init annotations
+      if(Object.prototype.toString.call(options.annotations) === '[object Array]')
+        self.importAnnotations(options.annotations);
+
       //// init buttons
       // apply zooming functions to their buttons
       zoomOutButton.onClick = function(){ self.zoomOut(); return false; };
