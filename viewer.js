@@ -690,7 +690,7 @@
         , p = convertToImagePosition({ x: x, y: y });
 
       // if polygon is not closed, the coordinates can't be within bounds
-      if(vertices[vertices.length - 1].next !== vertices[0]) return false;
+      if(vertices.length < 3 || vertices[vertices.length - 1].next !== vertices[0]) return false;
 
       // adding start point again (too include last, closing edge)
       vertices.push(vertices[0]);
