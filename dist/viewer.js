@@ -6,16 +6,33 @@
 
     // options-object
     // possible start options:
-    // * mode:     string (other than default viewer-only mode)
-    //             - 'editAnswer'   : displays answer and answer related buttons
-    //             - 'editSolution' : displays solution and solution related buttons
-    //             - 'showSolution' : displays answer and solution
-    // * answer:   position-object, like { x: 0; y: 0; }
-    //             position of answer inside the image
-    // * solution: array of positions, like [{ x: 0; y: 0; }, { x: 1; y: 1; }]
-    //             the positions represent vertices which make up the solution
-    //             polygon
+    // * mode:        string (other than default viewer-only mode)
+    //                - 'editAnswer'      : displays answer and answer related buttons
+    //                - 'editSolution'    : displays solution and solution related buttons
+    //                - 'showSolution'    : displays answer and solution
+    //                - 'editAnnotations' : displays annotations and related edit-buttons
+    //                - 'showAnnotations' : displays annotations
+    //
+    // * answer:      position-object, like { x: 0; y: 0; }
+    //                position of answer inside the image
+    //
+    // * solution:    array of positions, like [{ x: 0; y: 0; }, { x: 1; y: 1; }]
+    //                the positions represent vertices which make up the solution
+    //                polygon
+    //
+    // * annotations: array of annotation-objects, example:
+    // [
+    //  {
+    //   polygon: [{ x: 0; y: 0; }, { x: 1; y: 1; }, { x: 2; y: 2; }, { x: 0; y: 0; }],
+    //   color: '#00FF00'
+    //  }
+    // ]
+    //
+
     options = (typeof options === 'object') ? options : {};
+
+    // sanitize options.mode once
+    options.mode = (typeof options.mode === 'string') ? options.mode : "";
 
     // canvas
     var canvas = document.getElementById(canvasId)
@@ -41,13 +58,10 @@
       , states = {
           DEFAULT: 0,
           ANSWER_DRAW: 1,
-          SOLUTION_DRAW: 2,
-          SOLUTION_MOVE: 3,
-          SOLUTION_POINT_DELETE: 4,
-          ANNOTATION_SELECT: 5,
-          ANNOTATION_DRAW: 6,
-          ANNOTATION_MOVE: 7,
-          ANNOTATION_DISPLAY: 8
+          POLYGON_DRAW: 2,
+          POLYGON_MOVE: 3,
+          POLYGON_POINT_DELETE: 4,
+          ANNOTATION_DISPLAY: 5
         }
       , state = states.DEFAULT
 
@@ -76,6 +90,18 @@
                            moveSolutionButton,
                            drawSolutionPointButton]
 
+      // buttons for the annotations feature
+      , addNewAnnotationButton = new Button('\uf067', 'Start drawing a new annotation')
+      , drawAnnotationPointButton = new Button('\uf040', 'Draw new annotation point (close with shift-click)')
+      , moveAnnotationButton = new Button('\uf047', 'Move annotation point')
+      , deleteAnnotationPointButton = new Button('\uf00d', 'Delete annotation point')
+      , deleteAnnotationButton = new Button('\uf1f8', 'Delete annotation')
+      , annotationButtons = [ addNewAnnotationButton,
+                              deleteAnnotationButton,
+                              deleteAnnotationPointButton,
+                              moveAnnotationButton,
+                              drawAnnotationPointButton]
+
       // contains all active buttons
       , buttons = defaultButtons.slice()
 
@@ -89,18 +115,30 @@
       , leftMouseButtonDown = false
       // keep last mouse position to calculate drag distance
       , mouseLastPos = null
+      // UI element which is currently in focus, i.e. the mouse is hovering over it
+      , focusUIElement = null
+      // active polygon in edit mode
+      , activePolygon = null
 
     // answer feature
-      , answerEditable = (typeof options.mode === 'string' && options.mode === 'editAnswer')
-      , answerVisible = answerEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
+      , answerEditable = options.mode === 'editAnswer'
+      , answerVisible = answerEditable || options.mode === 'showSolution'
 
     // solution feature
-      , solutionEditable = (typeof options.mode === 'string' && options.mode === 'editSolution')
-      , solutionVisible = solutionEditable || (typeof options.mode === 'string' && options.mode === 'showSolution')
+      , solutionEditable = options.mode === 'editSolution'
+      , solutionVisible = solutionEditable || options.mode === 'showSolution'
 
     // annotation feature
-      , annotationsEditable = (typeof options.mode === 'string' && options.mode === 'editAnnotations')
-      , annotationsVisible = annotationsEditable || (typeof options.mode === 'string' && options.mode === 'showAnnotations');
+      , annotationsEditable = options.mode === 'editAnnotations'
+      , annotationsVisible = annotationsEditable || options.mode === 'showAnnotations'
+      , annotationColors = [
+                            '#8dd3c7',
+                            '#ffffb3',
+                            '#bebada',
+                            '#fb8072',
+                            '#80b1d3',
+                            '#fdb462'
+                           ];
 
     // image
     this.image = new Image();
@@ -115,16 +153,20 @@
     // format: { polygon: Polygon-object, color: color-string }
     this.annotations = [];
 
+    function isState(checkState){
+      return state === states[checkState];
+    }
+
     function importPolygon(vertexArray){
        if(vertexArray.length < 1){
         return new Polygon();
       }
-      var initialVertex = new Vertex(vertexArray[0].x, vertexArray[0].y)
+      var initialVertex = createVertex(vertexArray[0].x, vertexArray[0].y)
         , current = initialVertex
         , next = null;
 
       for(var i = 1; i < vertexArray.length; i++){
-        next = new Vertex(vertexArray[i].x, vertexArray[i].y);
+        next = createVertex(vertexArray[i].x, vertexArray[i].y);
         if(next.equals(initialVertex)){
           current.next = initialVertex;
           break;
@@ -158,7 +200,7 @@
     };
 
     this.importSolution = function(importedSolution){
-      this.solution = (importedSolution.length >= 1) ? importPolygon(importedSolution) : null;
+      this.solution = activePolygon = (importedSolution.length >= 1) ? importPolygon(importedSolution) : null;
       dirty = true;
     };
 
@@ -172,11 +214,8 @@
     };
 
     this.importAnnotations = function(importedAnnotations){
-      this.annotations = importedAnnotations.map(function(importAnnotation){
-        return {
-          color: importAnnotation.color,
-          polygon: importPolygon(importAnnotation.polygon)
-        };
+      importedAnnotations.forEach(function(importAnnotation){
+        addNewAnnotation(importPolygon(importAnnotation.polygon), importAnnotation.color);
       });
     };
 
@@ -238,31 +277,24 @@
 
         // draw solution
         if(solutionVisible && self.solution !== null){
-          self.solution.draw(ctx);
-
-          // draw line to mouse cursor
-         if(solutionEditable && !self.solution.isClosed()){
-            var lastVertexPosition = self.solution.getLastVertex().position
-              //, mousePosition = { x: mouseLastPos.x / scale, y: mouseLastPos.y / scale };
-              , mousePosition = convertToImagePosition(mouseLastPos)
-              , relativePosition = {
-                x: mousePosition.x - lastVertexPosition.x,
-                y: mousePosition.y - lastVertexPosition.y
-              };
-              drawLine(ctx, lastVertexPosition, relativePosition, '#FF3300', defaultLineWidth);
-          }
+          drawPolygon(ctx, self.solution);
         }
 
         // draw annotations
         if(annotationsVisible){
           self.annotations.forEach(function(annotation){
-            annotation.polygon.draw(ctx, annotation.color);
+            drawPolygon(ctx, annotation.polygon, annotation.color);
           });
         }
 
-        // draw solution
-        if(solutionVisible && self.solution !== null){
-          self.solution.draw(ctx);
+        // draw line to mouse cursor
+        if((solutionEditable || annotationsEditable)
+          && activePolygon !== null
+          && activePolygon.getLength() > 0
+          && !activePolygon.isClosed()){
+          var lastVertexPosition = activePolygon.getLastVertex().position
+            , mousePosition = convertToImagePosition(mouseLastPos);
+            drawLine(ctx, lastVertexPosition, mousePosition, '#FF3300', defaultLineWidth);
         }
 
         // draw answer
@@ -293,12 +325,16 @@
 
       // draw the line
       var translation = convertToCanvasTranslation(from)
+        , relativeToPosition = {
+          x: to.x - from.x,
+          y: to.y - from.y
+        }
         , drawPos =  { x: 0, y: 0};
       ctx.translate(translation.x, translation.y);
       ctx.scale(scale, scale);
       ctx.beginPath();
       ctx.moveTo(drawPos.x, drawPos.y);
-      ctx.lineTo(to.x, to.y);
+      ctx.lineTo(relativeToPosition.x, relativeToPosition.y);
       ctx.stroke();
 
       ctx.restore();
@@ -405,44 +441,64 @@
       };
     }
 
-    function Vertex(x, y) {
-      var vertexInstance = this;
+    function createVertex(x, y, polygon){
+      var newVertex = new Vertex(x, y, polygon);
 
-      var pos = this.position = {
-        x: x,
-        y: y
+      newVertex.onClick = function(evt){
+        if(isState('POLYGON_POINT_DELETE')){
+          if(newVertex.polygon !== null){
+            newVertex.polygon.deleteVertex(newVertex);
+            if(newVertex.polygon === self.solution){
+              self.onSolutionChange(self.exportSolution());
+            }
+            dirty = true;
+          }
+          return false;
+        }
+        if(isState('POLYGON_DRAW')){
+          var isInitialVertex = newVertex.polygon !== null
+                                && newVertex.equals(newVertex.polygon.initialVertex);
+          if(isInitialVertex && newVertex.polygon.getLength() > 2){
+            newVertex.polygon.close();
+            state = states.DEFAULT;
+            if(newVertex.polygon === self.solution){
+              self.onSolutionChange(self.exportSolution());
+            }
+            return false;
+          }
+        }
+        return true;
       };
 
-      this.next = null;
-
-      this.handleWidth = 12;
-
-      this.onClick = function(evt){
-        if(state === states.SOLUTION_POINT_DELETE){
-          self.solution.deleteVertex(vertexInstance);
-          self.onSolutionChange(self.exportSolution());
-          dirty = true;
-          return;
-        }
-        if(state === states.SOLUTION_DRAW
-        && self.solution !== null
-        && vertexInstance.equals(self.solution.initialVertex)
-        ){
-          self.solution.close();
-          state = states.DEFAULT;
-          self.onSolutionChange(self.exportSolution());
-          return;
-        }
-      };
-
-      this.onMouseDown = function(){
-        if(state === states.SOLUTION_MOVE){
-          activeMoveElement = pos;
+      newVertex.onMouseDown = function(){
+        if(isState('POLYGON_MOVE')){
+          activeMoveElement = newVertex.position;
           leftMouseButtonDown = true;
           return true;
         }
         return false;
       };
+
+      return newVertex;
+    }
+
+    function Vertex(x, y, polygon) {
+      var vertexInstance = this;
+
+      this.position = {
+        x: x,
+        y: y
+      };
+
+      this.polygon = polygon || null;
+
+      this.next = null;
+
+      this.handleWidth = 12; // also used as bounding box
+
+      this.onClick = function(evt){ return true; }; // just bubble on default
+
+      this.onMouseDown = function(){};
     }
 
     Vertex.prototype.equals = function(other){
@@ -457,30 +513,50 @@
           && y >= canvasPosition.y - this.handleWidth / 2 && y <= canvasPosition.y + this.handleWidth / 2;
     };
 
-    Vertex.prototype.drawHandle = function(ctx){
+    function drawVertexHandle(ctx, vertex){
       // preserve context
       ctx.save();
 
-      var translation = convertToCanvasTranslation(this.position);
+      var translation = convertToCanvasTranslation(vertex.position);
       ctx.translate(translation.x, translation.y);
 
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = (vertex === focusUIElement
+                       && vertex === activePolygon.initialVertex
+                       && isState('POLYGON_DRAW'))
+                     ? '#FF6600' // if mouse is hovering over this and a click would close the polygon
+                     : '#FFFFFF'; // default
       ctx.strokeStyle = '#000000';
 
       ctx.beginPath();
-      ctx.rect(-this.handleWidth/2, // x
-               -this.handleWidth/2, // y
-               this.handleWidth, // width
-               this.handleWidth); // height
+      ctx.rect(-vertex.handleWidth/2, // x
+               -vertex.handleWidth/2, // y
+               vertex.handleWidth, // width
+               vertex.handleWidth); // height
       ctx.stroke();
       ctx.fill();
 
       // restore context
       ctx.restore();
-    };
+    }
 
     function Polygon(initialVertex){
+      var polygonInstance = this;
+
       this.initialVertex = initialVertex || null;
+
+      this.onMouseDown = function(evt){
+        return false;
+      };
+
+      this.onClick = function(evt){
+        if(solutionEditable || annotationsEditable){
+          activePolygon = polygonInstance;
+          dirty = true;
+          return false; // don't bubble
+        } else {
+          return true; // bubble
+        }
+      };
     }
 
     Polygon.prototype.addVertex = function(vertex){
@@ -493,6 +569,7 @@
       } else {
         this.initialVertex = vertex;
       }
+      vertex.polygon = this;
       dirty = true;
     };
 
@@ -527,13 +604,13 @@
       return vertices;
     };
 
-    Polygon.prototype.draw = function(ctx, fillColor, strokeColor){
+    function drawPolygon(ctx, polygon, fillColor, strokeColor){
       // only draw lines or polygon if there is more than one vertex
-      if(this.initialVertex !== null && this.initialVertex.next !== null){
+      if(polygon.initialVertex !== null && polygon.initialVertex.next !== null){
         var drawPos =  { x: 0, y: 0}
-          , current = this.initialVertex
+          , current = polygon.initialVertex
           , next
-          , translation = convertToCanvasTranslation(this.initialVertex.position)
+          , translation = convertToCanvasTranslation(polygon.initialVertex.position)
           ;
         ctx.save();
         ctx.globalAlpha = 0.7;
@@ -549,11 +626,11 @@
           };
           ctx.lineTo(drawPos.x, drawPos.y);
           current = next;
-        } while(current.next !== null && current !== this.initialVertex);
+        } while(current.next !== null && current !== polygon.initialVertex);
 
         ctx.fillStyle = fillColor || '#0000FF';
         ctx.strokeStyle = strokeColor || '#66FF33';
-        if(current === this.initialVertex){
+        if(current === polygon.initialVertex){
           ctx.strokeStyle = strokeColor || '#000000';
           ctx.closePath();
           ctx.fill();
@@ -565,23 +642,36 @@
       }
 
       // draw handles
-      if(solutionEditable){
-        this.getVertices().forEach(function(handle){
-          handle.drawHandle(ctx);
+      if((polygon === activePolygon && (solutionEditable || annotationsEditable))){
+        polygon.getVertices().forEach(function(handle){
+          drawVertexHandle(ctx, handle);
         });
       }
-    };
+    }
 
     Polygon.prototype.isClosed = function(){
       var current = this.initialVertex;
+      if(current === null) return false;
       while(current.next !== null && current.next !== this.initialVertex) current = current.next;
       return current.next === this.initialVertex;
     };
 
     Polygon.prototype.getLastVertex = function(){
       var current = this.initialVertex;
+      if(current === null) return null;
       while(current.next !== null && current.next !== this.initialVertex) current = current.next;
       return current;
+    };
+
+    Polygon.prototype.getLength = function(){
+      if(this.initialVertex === null) return 0;
+      var length = 1;
+      var current = this.initialVertex;
+      while(current.next !== null && current.next !== this.initialVertex){
+        current = current.next;
+        length++;
+      }
+      return length;
     };
 
     function isLeft(p0, p1, p2){
@@ -602,10 +692,13 @@
         , wn = 0
 
       // point to check
-        , p = { x: x, y: y };
+        , p = convertToImagePosition({ x: x, y: y });
 
       // if polygon is not closed, the coordinates can't be within bounds
-      if(vertices[vertices.length - 1].next !== vertices[0]) return false;
+      if(vertices.length < 3 || vertices[vertices.length - 1].next !== vertices[0]) return false;
+
+      // adding start point again (too include last, closing edge)
+      vertices.push(vertices[0]);
 
       // algorithm see: http://geomalgorithms.com/a03-_inclusion.html
       for(var i = 0; i + 1 < vertices.length; i++){ // edge from vertices[i] to vertices[i+1]
@@ -634,14 +727,35 @@
       }
     };
 
+    function addNewAnnotation(polygon, color){
+      var newAnnotation =  {
+        polygon: polygon || new Polygon(),
+        color: color || annotationColors[(self.annotations.length + 1) % annotationColors.length]
+      };
+      self.annotations.push(newAnnotation);
+      return newAnnotation;
+    }
+
+    function cleanupAnnotations(){
+      // delete all unclosed annotations
+      self.annotations = self.annotations.filter(function(annotation){
+        if(typeof annotation.polygon === 'object'
+        && typeof annotation.polygon.isClosed !== 'undefined'){
+          return annotation.polygon.isClosed();
+        }
+        return false;
+      });
+    }
+
     function getAnswerColor(){
       var color = '#0000ff'; // Default: blue
 
       // change color if answer is within solution
       if(solutionVisible){ // show solution flag enabled?
+        var canvasAnswer = convertToCanvasTranslation(self.answer);
         // is the answer within the solution?
         if(self.solution !== null
-        && self.solution.isWithinBounds(self.answer.x, self.answer.y)){
+        && self.solution.isWithinBounds(canvasAnswer.x, canvasAnswer.y)){
           color = '#00ff00'; //green
         } else {
           color = '#ff0000'; // red
@@ -669,11 +783,27 @@
     }
 
     function getUIElements(){
-      // only return the solution vertices handler if in solution edit mode and there are some already
-      var solutionVertices = (self.solution !== null && solutionEditable)
-                             ? self.solution.getVertices()
-                             : [];
-      return buttons.concat(solutionVertices);
+      var collectedUIElements = [];
+      // add buttons
+      collectedUIElements = collectedUIElements.concat(buttons);
+
+      // only add the polygon vertices handler
+      // if there is an active polygon
+      // and we are in polygon edit mode
+      // (and add them before the polygons)
+      if((solutionEditable || annotationsEditable) && activePolygon !== null){
+        collectedUIElements = collectedUIElements.concat(activePolygon.getVertices());
+      }
+
+      // add annotations
+      collectedUIElements = collectedUIElements.concat(self.annotations.map(function(annotation){
+        return annotation.polygon;
+      }));
+
+      // add solution, if it exists
+      if(self.solution !== null) collectedUIElements.push(self.solution);
+
+      return collectedUIElements;
     }
 
     function getUIElement(evt){
@@ -684,8 +814,8 @@
           }
         , activeUIElement =
               getUIElements()
-              .filter(function(button){
-                return button.isWithinBounds(pos.x, pos.y);
+              .filter(function(uiElement){
+                return uiElement.isWithinBounds(pos.x, pos.y);
               });
       return (activeUIElement.length > 0 ) ? activeUIElement[0] : null;
     }
@@ -710,19 +840,17 @@
     function onMouseClick(evt){
       if(evt.button === 0){ // left/main button
         var activeElement = getUIElement(evt);
-        if(activeElement !== null){
-          activeElement.onClick(evt);
-        } else {
+        if(activeElement === null || activeElement.onClick(evt)){
           var rect = canvas.getBoundingClientRect()
             , clickPos = {
                 x: evt.clientX - rect.left,
                 y: evt.clientY - rect.top
               };
-          if(state === states.ANSWER_DRAW){
+          if(isState('ANSWER_DRAW')){
             self.answer = convertToImagePosition(clickPos);
             dirty = true;
           }
-          if(state === states.SOLUTION_DRAW){
+          else if(isState('POLYGON_DRAW')){
             if(evt.shiftKey){
               // close polygon
               if(self.solution !== null){
@@ -732,12 +860,31 @@
               }
             } else {
               var newVertexPosition = convertToImagePosition(clickPos)
-                , newVertex = new Vertex(newVertexPosition.x, newVertexPosition.y);
-              if(self.solution === null) self.solution = new Polygon();
-              self.solution.addVertex(newVertex);
+                , newVertex = createVertex(newVertexPosition.x, newVertexPosition.y);
+              if(activePolygon === null){
+                if(solutionEditable){
+                  if(self.solution === null){
+                    self.solution = new Polygon();
+                  }
+                  activePolygon = self.solution;
+                } else if(annotationsEditable){
+                  console.log("should have active polygon");
+                  return;
+                } else {
+                  console.log("invalid POLYGON_DRAW state");
+                  return;
+                }
+              }
+              activePolygon.addVertex(newVertex);
             }
             self.onSolutionChange(self.exportSolution());
             dirty = true;
+          }
+          else {
+            if(activePolygon !== null){
+              activePolygon = null;
+              dirty = true;
+            }
           }
         }
       }
@@ -775,15 +922,24 @@
       } else {
         var activeElement = getUIElement(evt)
           , oldToolTip = currentTooltip;
-        if(activeElement !== null && typeof activeElement.tooltip !== 'undefined'){
-          currentTooltip = activeElement.tooltip;
-        } else {
+        if(activeElement !== null){
+          if(typeof activeElement.tooltip !== 'undefined'){
+            currentTooltip = activeElement.tooltip;
+          }
+          // new focus UI element?
+          if(activeElement !== focusUIElement){
+            focusUIElement = activeElement;
+          }
+        } else { // no activeElement
           currentTooltip = null;
+          if(focusUIElement !== null){
+            focusUIElement = null;
+          }
         }
         if(oldToolTip !== currentTooltip) dirty = true;
       }
       mouseLastPos = newPos;
-      if(solutionEditable && Math.max(Math.abs(deltaX), Math.abs(deltaY)) > 2) dirty = true;
+      if(solutionEditable || annotationsEditable) dirty = true;
     }
 
     function Button(icon, tooltip){
@@ -809,7 +965,7 @@
       this.enabledAlpha = 0.7;
 
       // click action
-      this.onClick = function(){ alert('no click action set!'); };
+      this.onClick = function(){ alert('no click action set!'); return true; };
 
       // mouse down action
       this.onMouseDown = function(){ return false; };
@@ -913,66 +1069,124 @@
       if(Object.prototype.toString.call(options.solution) === '[object Array]')
         self.importSolution(options.solution);
 
+      //// init annotations
+      if(Object.prototype.toString.call(options.annotations) === '[object Array]')
+        self.importAnnotations(options.annotations);
+
       //// init buttons
       // apply zooming functions to their buttons
-      zoomOutButton.onClick = function(){ self.zoomOut(); };
-      zoomInButton.onClick = function(){ self.zoomIn(); };
+      zoomOutButton.onClick = function(){ self.zoomOut(); return false; };
+      zoomInButton.onClick = function(){ self.zoomIn(); return false; };
       // if answer feature enable, show their buttons
       if(answerEditable){
         // delete answer button
         deleteAnswerButton.onClick = function(){
           self.answer = null;
           dirty = true;
+          return false;
         };
         // add answer button
         addAnswerButton.enabled = function(){
-          return (state === states.ANSWER_DRAW);
+          return isState('ANSWER_DRAW');
         };
         // onclick: toggle draw answer mode
         addAnswerButton.onClick = function(){
-          state = (state === states.ANSWER_DRAW) ? states.DEFAULT : states.ANSWER_DRAW;
+          state = isState('ANSWER_DRAW') ? states.DEFAULT : states.ANSWER_DRAW;
           dirty = true;
+          return false;
         };
         // merge them with the other buttons
         buttons = defaultButtons.concat(answerButtons);
       }
+
+      var drawPolygonPointEnabled = function(){
+          return isState('POLYGON_DRAW');
+        }
+        , drawPolygonPointOnClick = function(){
+          state = isState('POLYGON_DRAW')
+                        ? states.DEFAULT
+                        : states.POLYGON_DRAW;
+          dirty = true;
+          return false;
+        }
+        , movePolygonPointEnabled = function(){
+          return isState('POLYGON_MOVE');
+        }
+        , movePolygonPointOnClick = function(){
+          state = isState('POLYGON_MOVE')
+                        ? states.DEFAULT
+                        : states.POLYGON_MOVE;
+          dirty = true;
+          return false;
+        }
+        , deletePolygonPointEnabled = function(){
+          return isState('POLYGON_POINT_DELETE');
+        }
+        , deletePolygonPointOnClick = function(){
+          state = isState('POLYGON_POINT_DELETE')
+                        ? states.DEFAULT
+                        : states.POLYGON_POINT_DELETE;
+          dirty = true;
+          return false;
+        };
+
       // if solution feature enable, show their buttons
       if(solutionEditable){
-        drawSolutionPointButton.enabled = function(){
-          return (state === states.SOLUTION_DRAW);
-        };
-        drawSolutionPointButton.onClick = function(){
-          state = (state === states.SOLUTION_DRAW)
-                        ? states.DEFAULT
-                        : states.SOLUTION_DRAW;
-          dirty = true;
-        };
-        moveSolutionButton.enabled = function(){
-          return (state === states.SOLUTION_MOVE);
-        };
-        moveSolutionButton.onClick = function(){
-          state = (state === states.SOLUTION_MOVE)
-                        ? states.DEFAULT
-                        : states.SOLUTION_MOVE;
-          dirty = true;
-        };
-        deleteSolutionPointButton.enabled = function(){
-          return (state === states.SOLUTION_POINT_DELETE);
-        };
-        deleteSolutionPointButton.onClick = function(){
-          state = (state === states.SOLUTION_POINT_DELETE)
-                        ? states.DEFAULT
-                        : states.SOLUTION_POINT_DELETE;
-          dirty = true;
-        };
+        drawSolutionPointButton.enabled = drawPolygonPointEnabled;
+        drawSolutionPointButton.onClick = drawPolygonPointOnClick;
+        moveSolutionButton.enabled = movePolygonPointEnabled;
+        moveSolutionButton.onClick = movePolygonPointOnClick;
+        deleteSolutionPointButton.enabled = deletePolygonPointEnabled;
+        deleteSolutionPointButton.onClick = deletePolygonPointOnClick;
         deleteSolutionButton.onClick = function(){
-          self.solution = null;
+          self.solution = activePolygon = null;
           self.onSolutionChange(self.exportSolution());
           dirty = true;
+          return false;
         };
 
         // merge them with the other buttons
         buttons = defaultButtons.concat(solutionButtons);
+      }
+
+      // if annotation feature enable, show their buttons
+      if(annotationsEditable){
+        addNewAnnotationButton.enabled = function(){
+          return annotationsEditable;
+        };
+        addNewAnnotationButton.onClick = function(){
+          cleanupAnnotations();
+          var newAnnotation = addNewAnnotation();
+          activePolygon = newAnnotation.polygon;
+          state = states.POLYGON_DRAW;
+          return false;
+        };
+        drawAnnotationPointButton.enabled = drawPolygonPointEnabled;
+        drawAnnotationPointButton.onClick = drawPolygonPointOnClick;
+        moveAnnotationButton.enabled = movePolygonPointEnabled;
+        moveAnnotationButton.onClick = movePolygonPointOnClick;
+        deleteAnnotationPointButton.enabled = deletePolygonPointEnabled;
+        deleteAnnotationPointButton.onClick = deletePolygonPointOnClick;
+        deleteAnnotationButton.onClick = function(){
+          var deletePosition = -1
+            , i = 0;
+          for(;i < self.annotations.length; i++){
+            if(self.annotations[i].polygon === activePolygon){
+              deletePosition = i;
+              break;
+            }
+          }
+          if(deletePosition > -1){
+            self.annotations.splice(deletePosition, 1);
+            activePolygon = null;
+            dirty = true;
+            return false;
+          }
+          return true;
+        };
+
+        // merge them with the other buttons
+        buttons = defaultButtons.concat(annotationButtons);
       }
 
       //// init Input handling
