@@ -96,11 +96,11 @@
       , moveAnnotationButton = new Button('\uf047', 'Move annotation point')
       , deleteAnnotationPointButton = new Button('\uf00d', 'Delete annotation point')
       , deleteAnnotationButton = new Button('\uf1f8', 'Delete annotation')
-      , annotationButtonsNoActivePolygon = [ addNewAnnotationButton ]
-      , annotationButtonsWithActivePolygon = [deleteAnnotationButton,
-                                              deleteAnnotationPointButton,
-                                              moveAnnotationButton,
-                                              drawAnnotationPointButton]
+      , annotationButtons = [ addNewAnnotationButton,
+                              deleteAnnotationButton,
+                              deleteAnnotationPointButton,
+                              moveAnnotationButton,
+                              drawAnnotationPointButton]
 
       // contains all active buttons
       , buttons = defaultButtons.slice()
@@ -1088,38 +1088,45 @@
         buttons = defaultButtons.concat(answerButtons);
       }
 
-      // if solution feature enable, show their buttons
-      if(solutionEditable){
-        drawSolutionPointButton.enabled = function(){
+      var drawPolygonPointEnabled = function(){
           return isState('POLYGON_DRAW');
-        };
-        drawSolutionPointButton.onClick = function(){
+        }
+        , drawPolygonPointOnClick = function(){
           state = isState('POLYGON_DRAW')
                         ? states.DEFAULT
                         : states.POLYGON_DRAW;
           dirty = true;
           return false;
-        };
-        moveSolutionButton.enabled = function(){
+        }
+        , movePolygonPointEnabled = function(){
           return isState('POLYGON_MOVE');
-        };
-        moveSolutionButton.onClick = function(){
+        }
+        , movePolygonPointOnClick = function(){
           state = isState('POLYGON_MOVE')
                         ? states.DEFAULT
                         : states.POLYGON_MOVE;
           dirty = true;
           return false;
-        };
-        deleteSolutionPointButton.enabled = function(){
+        }
+        , deletePolygonPointEnabled = function(){
           return isState('POLYGON_POINT_DELETE');
-        };
-        deleteSolutionPointButton.onClick = function(){
+        }
+        , deletePolygonPointOnClick = function(){
           state = isState('POLYGON_POINT_DELETE')
                         ? states.DEFAULT
                         : states.POLYGON_POINT_DELETE;
           dirty = true;
           return false;
         };
+
+      // if solution feature enable, show their buttons
+      if(solutionEditable){
+        drawSolutionPointButton.enabled = drawPolygonPointEnabled;
+        drawSolutionPointButton.onClick = drawPolygonPointOnClick;
+        moveSolutionButton.enabled = movePolygonPointEnabled;
+        moveSolutionButton.onClick = movePolygonPointOnClick;
+        deleteSolutionPointButton.enabled = deletePolygonPointEnabled;
+        deleteSolutionPointButton.onClick = deletePolygonPointOnClick;
         deleteSolutionButton.onClick = function(){
           self.solution = activePolygon = null;
           self.onSolutionChange(self.exportSolution());
@@ -1129,6 +1136,46 @@
 
         // merge them with the other buttons
         buttons = defaultButtons.concat(solutionButtons);
+      }
+
+      // if annotation feature enable, show their buttons
+      if(annotationsEditable){
+        addNewAnnotationButton.enabled = function(){
+          return annotationsEditable;
+        };
+        addNewAnnotationButton.onClick = function(){
+          cleanupAnnotations();
+          var newAnnotation = addNewAnnotation();
+          activePolygon = newAnnotation.polygon;
+          state = states.POLYGON_DRAW;
+          return false;
+        };
+        drawAnnotationPointButton.enabled = drawPolygonPointEnabled;
+        drawAnnotationPointButton.onClick = drawPolygonPointOnClick;
+        moveAnnotationButton.enabled = movePolygonPointEnabled;
+        moveAnnotationButton.onClick = movePolygonPointOnClick;
+        deleteAnnotationPointButton.enabled = deletePolygonPointEnabled;
+        deleteAnnotationPointButton.onClick = deletePolygonPointOnClick;
+        deleteAnnotationButton.onClick = function(){
+          var deletePosition = -1
+            , i = 0;
+          for(;i < self.annotations.length; i++){
+            if(self.annotations[i].polygon === activePolygon){
+              deletePosition = 1;
+              break;
+            }
+          }
+          if(deletePosition > -1){
+            self.annotations.splice(deletePosition, 1);
+            activePolygon = null;
+            dirty = true;
+            return false;
+          }
+          return true;
+        };
+
+        // merge them with the other buttons
+        buttons = defaultButtons.concat(annotationButtons);
       }
 
       //// init Input handling
