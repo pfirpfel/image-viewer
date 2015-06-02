@@ -1198,5 +1198,3 @@
 
   window.ImageViewer = ImageViewer;
 }(window));
-
-//# sourceMappingURL=viewer.js.map

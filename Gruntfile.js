@@ -17,7 +17,7 @@ module.exports = function(grunt) {
     // concatenate java script files
     concat: {
       options: {
-        sourceMap: true
+        //sourceMap: true
       },
       viewer: {
         src: ['viewer.js'],
@@ -29,6 +29,7 @@ module.exports = function(grunt) {
     uglify: {
       options: {
         mangle: true,
+        sourceMap: true,
         compress: {}
       },
       uglified_build: {
