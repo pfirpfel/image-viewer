@@ -214,7 +214,7 @@
     };
 
     this.importAnnotations = function(importedAnnotations){
-      this.annotations = importedAnnotations.forEach(function(importAnnotation){
+      importedAnnotations.forEach(function(importAnnotation){
         addNewAnnotation(importPolygon(importAnnotation.polygon), importAnnotation.color);
       });
     };
