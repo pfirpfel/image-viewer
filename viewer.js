@@ -518,7 +518,7 @@
       ctx.translate(translation.x, translation.y);
 
       ctx.fillStyle = (vertex === focusUIElement
-                       && vertex === self.solution.initialVertex
+                       && vertex === activePolygon.initialVertex
                        && isState('POLYGON_DRAW'))
                      ? '#FF6600' // if mouse is hovering over this and a click would close the polygon
                      : '#FFFFFF'; // default
@@ -786,7 +786,7 @@
       // if there is an active polygon
       // and we are in polygon edit mode
       // (and add them before the polygons)
-      if(solutionEditable && activePolygon !== null){
+      if((solutionEditable || annotationsEditable) && activePolygon !== null){
         collectedUIElements = collectedUIElements.concat(activePolygon.getVertices());
       }
 
