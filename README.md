@@ -240,3 +240,13 @@ myImageViewer.importAnnotations(annotations);
 var myImageViewer = new ImageViewer('viewerCanvas', 'image.png', { annotations: annotations });
 ```
 Annotations are an array of annotation objects, see 'Export annotations'.
+
+#### On Change Event
+On every change on any annotation, the onAnnotationChange event gets called.
+The parameter given to the event is the output of exportAnnotations().
+
+```javascript
+myImageViewer.onAnnotationChange = function(annotations){
+ // do something with these annotations
+}
+```

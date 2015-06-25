@@ -1,6 +1,6 @@
 {
   "name": "image-viewer",
-  "version": "0.3.3",
+  "version": "0.4.1",
   "description": "HTML5/canvas-based Image Viewer with quiz mode",
   "main": "dist/viewer.js",
   "files": [ "dist" ],
