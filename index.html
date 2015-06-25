@@ -23,28 +23,30 @@
     </ul>
     </p>
     <script>
-      // initialize image viewer
       var imageSrc = 'example-assets/target.png'
         , canvasId = 'viewerCanvas'
-        , myImageViewer = new ImageViewer(canvasId, imageSrc)
+        , myImageViewer = null
         , solution = []
         , annotations = []
         , answer = null;
 
-      WebFont.load({
-        custom: {
-          families: ['FontAwesome'],
-          urls: ['css/fonts.css'],
-          testStrings: {
-            // Fontawesome does not contain 'normal' characters,
-            // therefore we need to test 'special ones'
-            'FontAwesome': '\uf010\uf00e\uf1f8\uf024\uf040\uf047\uf00d\uf1f8'
+      window.onload = function(){
+        WebFont.load({
+          custom: {
+            families: ['FontAwesome'],
+            urls: ['css/fonts.css'],
+            testStrings: {
+              // Fontawesome does not contain 'normal' characters,
+              // therefore we need to test 'special ones'
+              'FontAwesome': '\uf010\uf00e\uf1f8\uf024\uf040\uf047\uf00d\uf1f8'
+            }
+          },
+          fontactive: function() {
+            // initialize image viewer
+            myImageViewer = new ImageViewer(canvasId, imageSrc);
           }
-        },
-        fontactive: function() {
-          myImageViewer.refresh();
-        }
-      });
+        });
+      };
 
       // methods to interact with viewer
       function saveState(){
