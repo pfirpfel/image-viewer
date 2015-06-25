@@ -450,7 +450,11 @@
             newVertex.polygon.deleteVertex(newVertex);
             if(newVertex.polygon === self.solution){
               self.onSolutionChange(self.exportSolution());
+            } else {
+              cleanupAnnotations();
+              self.onAnnotationChange(self.exportAnnotations());
             }
+            // FIXME: if this reduced the polygon to two or less vertices, delete the polygon
             dirty = true;
           }
           return false;
@@ -463,6 +467,9 @@
             state = states.DEFAULT;
             if(newVertex.polygon === self.solution){
               self.onSolutionChange(self.exportSolution());
+            } else {
+              cleanupAnnotations();
+              self.onAnnotationChange(self.exportAnnotations());
             }
             return false;
           }
@@ -652,8 +659,14 @@
     Polygon.prototype.isClosed = function(){
       var current = this.initialVertex;
       if(current === null) return false;
-      while(current.next !== null && current.next !== this.initialVertex) current = current.next;
-      return current.next === this.initialVertex;
+      var count = 0;
+      while(current.next !== null && current.next !== this.initialVertex){
+        current = current.next;
+        count++;
+      }
+      return current.next === this.initialVertex // last vertex has to be same as the first
+          && count > 1; // at least to other vertices have to be traversed before returning,
+                        // otherwise it would only be a line
     };
 
     Polygon.prototype.getLastVertex = function(){
@@ -853,10 +866,15 @@
           else if(isState('POLYGON_DRAW')){
             if(evt.shiftKey){
               // close polygon
-              if(self.solution !== null){
-                self.solution.close();
+              if(activePolygon !== null){
+                activePolygon.close();
                 state = states.DEFAULT;
-                self.onSolutionChange(self.exportSolution());
+                if(activePolygon === self.solution){
+                  self.onSolutionChange(self.exportSolution());
+                } else {
+                  cleanupAnnotations();
+                  self.onAnnotationChange(self.exportAnnotations());
+                }
               }
             } else {
               var newVertexPosition = convertToImagePosition(clickPos)
@@ -877,7 +895,6 @@
               }
               activePolygon.addVertex(newVertex);
             }
-            self.onSolutionChange(self.exportSolution());
             dirty = true;
           }
           else {
@@ -916,8 +933,13 @@
         } else {
           activeMoveElement.x += deltaX / scale;
           activeMoveElement.y += deltaY / scale;
+          if(activePolygon === self.solution){
+            self.onSolutionChange(self.exportSolution());
+          } else {
+            cleanupAnnotations();
+            self.onAnnotationChange(self.exportAnnotations());
+          }
         }
-        self.onSolutionChange(self.exportSolution());
         dirty = true;
       } else {
         var activeElement = getUIElement(evt)
@@ -1180,6 +1202,8 @@
             self.annotations.splice(deletePosition, 1);
             activePolygon = null;
             dirty = true;
+            cleanupAnnotations();
+            self.onAnnotationChange(self.exportAnnotations());
             return false;
           }
           return true;
