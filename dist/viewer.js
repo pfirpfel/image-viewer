@@ -105,6 +105,9 @@
       // contains all active buttons
       , buttons = defaultButtons.slice()
 
+      // contains all active color buttons (for coloring annotations)
+      , colorButtons = []
+
       // current tool tip (used to track change of tool tip)
       , currentTooltip = null
 
@@ -345,11 +348,21 @@
         , radius = 20
         , gap = 2 * radius + padding
         , x = canvas.width - radius - padding
-        , y = canvas.height - radius - padding;
+        , y = canvas.height - radius - padding
+        , i;
 
       // draw buttons
-      for(var i = 0; i < buttons.length; i++){
+      for(i = 0; i < buttons.length; i++){
         buttons[i].draw(ctx, x, y - gap * i, radius);
+      }
+
+      // draw color buttons
+      // ---
+      // set starting coordinates in lower left corner
+      x = radius + padding;
+      y = canvas.height - radius - padding;
+      for(i = 0; i < colorButtons.length; i++){
+        colorButtons[i].draw(ctx, x, y - gap * i, radius);
       }
 
       // draw tooltip
@@ -798,7 +811,7 @@
     function getUIElements(){
       var collectedUIElements = [];
       // add buttons
-      collectedUIElements = collectedUIElements.concat(buttons);
+      collectedUIElements = collectedUIElements.concat(buttons).concat(colorButtons);
 
       // only add the polygon vertices handler
       // if there is an active polygon
@@ -972,6 +985,10 @@
       // transparency
       this.alpha = 0.5;
 
+      // border
+      this.lineWidth = 0; // default: 0 == disabled
+      this.strokeStyle = '#000000';
+
       // color
       this.color = '#000000';
 
@@ -1018,16 +1035,46 @@
       ctx.arc(x, y, radius, 0, 2 * Math.PI);
       ctx.closePath();
       ctx.fill();
+      if(this.lineWidth > 0){
+        ctx.lineWidth = this.lineWidth;
+        ctx.strokeStyle = this.strokeStyle;
+        ctx.stroke();
+      }
 
       // draw icon
-      ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
-      drawAwesomeIcon(ctx, this.icon, this.iconColor, x, y, radius);
-      ctx.restore();
+      if(this.icon !== null){
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        drawAwesomeIcon(ctx, this.icon, this.iconColor, x, y, radius);
+        ctx.restore();
+      }
 
       // restore context
       ctx.restore();
     };
+
+    function createAnnotationColorButton(color){
+      var button = new Button(null, 'Change active annotation to this color');
+      button.color = color;
+      button.lineWidth = 1;
+      button.enabled = function(){
+        return annotationsEditable && activePolygon !== null;
+      };
+      button.onClick = function(){
+        var i, found;
+        if(activePolygon !== null){
+          found = false;
+          for(i=0; !found && i < self.annotations.length; i++){
+            if(activePolygon === self.annotations[i].polygon){
+              self.annotations[i].color = color;
+              dirty = true;
+              found = true;
+            }
+          }
+        }
+      };
+      return button;
+    }
 
     function drawAwesomeIcon(ctx, icon, color, centreX, centreY, size){
       // font settings
@@ -1211,6 +1258,11 @@
 
         // merge them with the other buttons
         buttons = defaultButtons.concat(annotationButtons);
+
+        // adding color buttons
+        colorButtons = annotationColors.map(function(color){
+          return createAnnotationColorButton(color);
+        });
       }
 
       //// init Input handling
