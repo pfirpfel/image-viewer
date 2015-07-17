@@ -28,6 +28,9 @@
     //  }
     // ]
     //
+    // * annotationColors: array of CSS color values, defines the predefined set of colors
+    //                     used for annotations.
+    //
 
     options = (typeof options === 'object') ? options : {};
 
@@ -134,7 +137,7 @@
     // annotation feature
       , annotationsEditable = options.mode === 'editAnnotations'
       , annotationsVisible = annotationsEditable || options.mode === 'showAnnotations'
-      , annotationColors = [
+      , annotationColors = options.annotationColors || [
                             '#8dd3c7',
                             '#ffffb3',
                             '#bebada',
